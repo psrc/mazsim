@@ -1,0 +1,43 @@
+[project]
+name = "mazsim"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "jkolberg", email = "jwkolberg@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "autograd>=1.9.0",
+    "bokeh>=3.9.1",
+    "datashader>=0.19.1",
+    "ipykernel>=7.3.0",
+    "matplotlib>=3.10.9",
+    "numpy>2",
+    "pandana",
+    "pyyaml>=6.0.3",
+    "seaborn>=0.13.2",
+    "urbansim @ git+https://github.com/stefancoe/urbansim.git@transition_updates",
+    "urbansim_templates @ git+https://github.com/jkolberg/urbansim_templates.git",
+    "variable_generators @ git+https://github.com/jkolberg/variable_generators.git",
+]
+
+[project.scripts]
+mazsim = "mazsim:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+pandana = { path = "C:/Users/JKolberg/PythonProjects/forks/pandana", editable = true }
+
+[tool.uv]
+no-binary-package = ["pandana"]
+
+# This forces any external package needing numpy or pybind11 at compile-time 
+# to use the updated, NumPy 2-compatible versions
+override-dependencies = [
+    "numpy>=2.0.0",
+    "pybind11>=2.12.0"
+]

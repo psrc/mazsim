@@ -1,0 +1,20 @@
+baseline:  
+
+data_sources:
+# baseline data sources, ignore for scenarios
+  - blocks: blocks_2020.csv
+  - households: synthetic_households.csv
+  - jobs: jobs_2020.csv
+  - housing_units: synthetic_housing_units.csv
+  - persons: synthetic_persons.csv
+  - transit_stops: transit_stops.csv
+  - nodes: nodes.csv
+  - edges: edges.csv
+  - job_calib_targets: job_calib_targets.csv
+  - household_calib_targets: household_calib_targets.csv
+  - housing_unit_calib_targets: housing_unit_calib_targets.csv
+
+# scenario data sources
+  - block_capacity: block_capacity_0828_2026.csv
+  - annual_household_control_totals: luvit_household_control_totals.csv
+  - annual_employment_control_totals: luvit_employment_control_totals.csv
