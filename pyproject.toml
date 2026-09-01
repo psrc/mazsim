@@ -8,12 +8,13 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-        "autograd>=1.9.0",
+    "autograd>=1.9.0",
     "bokeh>=3.9.1",
     "datashader>=0.19.1",
     "ipykernel>=7.3.0",
     "matplotlib>=3.10.9",
     "numpy>2",
+    "orca @ git+https://github.com/stefancoe/orca.git",
     "pandana",
     "pyyaml>=6.0.3",
     "seaborn>=0.13.2",
@@ -27,7 +28,7 @@ requires = ["uv_build>=0.9.18,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
-pandana = { path = "D:/forks/pandana", editable = true }
+pandana = { path = "C:/Users/jkolberg/PythonProjects/forks/pandana", editable = true }
 
 [tool.uv]
 no-binary-package = ["pandana"]

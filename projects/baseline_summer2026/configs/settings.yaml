@@ -13,8 +13,14 @@ data_sources:
   - job_calib_targets: job_calib_targets.csv
   - household_calib_targets: household_calib_targets.csv
   - housing_unit_calib_targets: housing_unit_calib_targets.csv
+  - travel_data: travel_data.csv
 
 # scenario data sources
   - block_capacity: block_capacity_0828_2026.csv
   - annual_household_control_totals: luvit_household_control_totals.csv
   - annual_employment_control_totals: luvit_employment_control_totals.csv
+
+orca_preprocessing_steps:
+  - load_data
+  - build_networks
+  - register_variables
