@@ -7,24 +7,24 @@ saved_object:
     alternatives: blocks
     choice_column: block_id
     chooser_filters: (recent_mover == 1) & (income_quartile == 3)
-    chooser_sample_size: 5000
+    chooser_sample_size: null
     chooser_size: null
     choosers: households
     constrained_choices: true
     fitted_parameters:
-    - 0.027169118646317998
-    - 0.13981662939408826
-    - -0.08485854270126272
-    - -0.02377333256018872
-    - 0.11363173218996186
-    - -0.10710071759338614
-    - 0.5503190760471071
+    - -0.31464871856477744
+    - 0.23483911199341354
+    - -0.07100757922638806
+    - 2.4221531887682892
+    - 0.1095998658242414
+    - 0.02152578289011545
+    - 0.23670653207744008
     max_iter: null
     mct_intx_ops: null
     model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
-        + st_ln_block_groups_mean_rent + st_is_transit_stop_sum_1600_flat + st_block_groups_median_income
-        + st_block_groups_prop_year_built_2022 + st_block_groups_prop_children_0 +
-        st_ln_block_groups_density_housing_units - 1
+        + st_ln_block_groups_mean_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
+        + st_block_groups_prop_built_after_2010_1 + st_block_groups_prop_children_0
+        + st_ln_block_groups_density_housing_units - 1
     name: hlcm2
     out_alt_filters: vacant_housing_units > 0
     out_alternatives: null
@@ -32,27 +32,27 @@ saved_object:
     out_choosers: null
     out_column: null
     summary_table: "                  CHOICEMODELS ESTIMATION RESULTS            \
-        \      \n===================================================================\n\
-        Dep. Var.:                chosen   No. Observations:          5,000\nModel:\
-        \         Multinomial Logit   Df Residuals:              4,993\nMethod:  \
-        \     Maximum Likelihood   Df Model:                      7\nDate:       \
-        \          2026-09-02   Pseudo R-squ.:             0.042\nTime:          \
-        \            14:07   Pseudo R-bar-squ.:         0.042\nAIC:              \
-        \    44,134.360   Log-Likelihood:      -22,060.180\nBIC:                 \
-        \ 44,179.981   LL-Null:             -23,025.851\n============================================================================================================================\n\
+        \       \n====================================================================\n\
+        Dep. Var.:                chosen   No. Observations:         196,053\nModel:\
+        \         Multinomial Logit   Df Residuals:             196,046\nMethod: \
+        \      Maximum Likelihood   Df Model:                       7\nDate:     \
+        \            2026-09-02   Pseudo R-squ.:              0.077\nTime:       \
+        \               15:35   Pseudo R-bar-squ.:          0.077\nAIC:          \
+        \     1,666,580.004   Log-Likelihood:      -833,283.002\nBIC:            \
+        \   1,666,651.307   LL-Null:             -902,857.430\n============================================================================================================================\n\
         \                                                                        \
         \     coef   std err         z     P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------------------------------------\n\
         st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time  \
-        \  0.0272     0.029     0.931     0.352             \nst_ln_block_groups_mean_rent\
-        \                                               0.1398     0.020     6.900\
+        \ -0.3146     0.005   -69.155     0.000             \nst_ln_block_groups_mean_rent\
+        \                                               0.2348     0.003    74.789\
         \     0.000             \nst_is_transit_stop_sum_1600_flat               \
-        \                           -0.0849     0.017    -5.116     0.000        \
-        \     \nst_block_groups_median_income                                    \
-        \         -0.0238     0.018    -1.312     0.189             \nst_block_groups_prop_year_built_2022\
-        \                                       0.1136     0.014     8.284     0.000\
+        \                           -0.0710     0.003   -25.961     0.000        \
+        \     \nst_sum_income_ave_1600_flat                                      \
+        \          2.4222     0.006   390.229     0.000             \nst_block_groups_prop_built_after_2010_1\
+        \                                    0.1096     0.002    54.787     0.000\
         \             \nst_block_groups_prop_children_0                          \
-        \                 -0.1071     0.020    -5.247     0.000             \nst_ln_block_groups_density_housing_units\
-        \                                   0.5503     0.021    26.789     0.000 \
+        \                  0.0215     0.003     6.669     0.000             \nst_ln_block_groups_density_housing_units\
+        \                                   0.2367     0.003    69.477     0.000 \
         \            \n============================================================================================================================"
     tags: []
     template: LargeMultinomialLogitStep

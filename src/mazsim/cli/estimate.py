@@ -26,18 +26,16 @@ def _load_config(project_dir: Path, key: str) -> dict[str, Any]:
 
 def _fit_submodel(config: dict[str, Any], model_config: dict[str, Any]) -> None:
     """Fit one location choice sub-model (household, job, or housing unit) and register it with modelmanager."""
-    filter_field = config["filter_field"]
     filter_value = model_config["filter_value"]
 
     m = LargeMultinomialLogitStep()
     m.choosers = [config["choosers"]]
-    m.chooser_sample_size = config["chooser_sample_size"]
     m.chooser_filters = config["chooser_filters_template"].format(value=filter_value)
     m.alternatives = [config["alternatives"]]
     m.choice_column = config["choice_column"]
     m.constrained_choices = config["constrained_choices"]
     m.alt_sample_size = config["alt_sample_size"]
-    m.out_chooser_filters = f'(block_id == "-1") & ({filter_field} == {filter_value})'
+    m.out_chooser_filters = config["out_chooser_filters_template"].format(value=filter_value)
     m.alt_capacity = config["alt_capacity"]
     m.out_alt_filters = config["out_alt_filters"]
 
@@ -65,6 +63,18 @@ def estimate_jlcm(project_dir: Path) -> None:
 
     for model_config in config["models"]:
         _fit_submodel(config, model_config)
+
+
+@orca.step("estimate_hulcm")
+
+def estimate_hulcm(project_dir: Path) -> None:
+    """Fit and register every HULCM sub-model listed in estimate.yaml."""
+    mm.initialize(Path.joinpath(project_dir, "configs"))
+    config = _load_config(project_dir, "hulcm")
+
+    for model_config in config["models"]:
+        _fit_submodel(config, model_config)
+
 
 def add_run_args(parser):
     parser.add_argument(

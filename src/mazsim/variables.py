@@ -64,6 +64,14 @@ def register_job_variables(config: dict[str, Any]) -> None:
         return jobs.sector_id.map(aggr_sector_map)
 
 
+def register_housing_unit_variables() -> None:
+    """Register derived housing unit variables"""
+
+    @orca.column("housing_units", "built_after_2010", cache=True, cache_scope="iteration")
+    def built_after_2010(housing_units):
+        return (housing_units.year_built >= 2010).astype("int8")
+
+
 def fillna_median(series: pd.Series) -> pd.Series:
     return series.fillna(series.median())
 
@@ -320,6 +328,7 @@ def register_variables(project_dir: Path) -> None:
     register_block_variables()
     register_household_variables()
     register_job_variables(config)
+    register_housing_unit_variables()
 
     generated_variables: set[str] = set()
     register_aggregation_variables(config, generated_variables)

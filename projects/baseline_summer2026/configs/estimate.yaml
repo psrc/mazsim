@@ -4,10 +4,10 @@ estimation_steps:
   - register_variables
   - estimate_hlcm
   - estimate_jlcm
+  - estimate_hulcm
 
 hlcm:
   choosers: households
-  chooser_sample_size: 5000
   chooser_filters_template: (recent_mover == 1) & (income_quartile == {value})
   alternatives: blocks
   choice_column: block_id
@@ -15,13 +15,13 @@ hlcm:
   alt_sample_size: 100
   alt_capacity: vacant_housing_units
   out_alt_filters: vacant_housing_units > 0
-  filter_field: income_quartile
+  out_chooser_filters_template: (block_id == "-1") & (income_quartile == {value})
   expl_vars:
     - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
     - st_ln_block_groups_mean_rent
     - st_is_transit_stop_sum_1600_flat
-    - st_block_groups_median_income
-    - st_block_groups_prop_year_built_2022
+    - st_sum_income_ave_1600_flat
+    - st_block_groups_prop_built_after_2010_1
     - st_block_groups_prop_children_0
     - st_ln_block_groups_density_housing_units
   models: # order seems backwards but this will mean high income is placed first
@@ -36,7 +36,6 @@ hlcm:
 
 jlcm:
   choosers: jobs
-  chooser_sample_size: 5000
   chooser_filters_template: aggr_sector_id == {value}
   alternatives: blocks
   choice_column: block_id
@@ -44,7 +43,7 @@ jlcm:
   alt_sample_size: 100
   alt_capacity: vacant_job_spaces
   out_alt_filters: vacant_job_spaces > 0
-  filter_field: aggr_sector_id
+  out_chooser_filters_template: (block_id == "-1") & (aggr_sector_id == {value})
   expl_vars:
     - major_road_node_sum_800_flat
     - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
@@ -66,3 +65,40 @@ jlcm:
       filter_value: 4
     - name: jlcm5  # Educational Services, Health Care, Government
       filter_value: 5
+
+hulcm:
+  choosers: housing_units
+  chooser_filters_template: (year_built > 2010) & (unit_type_id == {value})
+  alternatives: blocks
+  choice_column: block_id
+  constrained_choices: true
+  alt_sample_size: 50
+  alt_capacity: vacant_du_spaces_clip
+  out_alt_filters: vacant_du_spaces_clip > 0
+  out_chooser_filters_template: (block_id == "-1") & (year_built > 2010) & (unit_type_id == {value})
+  expl_vars:
+    - major_road_node_sum_800_flat
+    - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
+    - st_prop_aggr_sector_id_1_ave_1600_flat
+    - st_prop_aggr_sector_id_2_ave_1600_flat
+    - st_prop_aggr_sector_id_3_ave_1600_flat
+    - st_prop_aggr_sector_id_4_ave_1600_flat
+    - st_prop_aggr_sector_id_5_ave_1600_flat
+    - st_ln_block_groups_mean_home_value
+    - st_ln_block_groups_mean_rent
+    - st_total_households_sum_2000_linear
+    - st_block_groups_median_year_built
+    - st_is_transit_stop_sum_1600_flat
+    - st_block_groups_median_income
+    - st_block_groups_prop_built_after_2010_1
+    - st_prop_children_0_ave_400_flat
+    - st_sum_income_ave_1600_flat
+  models:
+    - name: hulcm1  # single-family owner
+      filter_value: 1
+    - name: hulcm2  # single-family renter
+      filter_value: 2
+    - name: hulcm3  # multi-family owner
+      filter_value: 3
+    - name: hulcm4  # multi-family renter
+      filter_value: 4

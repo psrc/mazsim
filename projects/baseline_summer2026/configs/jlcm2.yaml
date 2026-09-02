@@ -7,20 +7,20 @@ saved_object:
     alternatives: blocks
     choice_column: block_id
     chooser_filters: aggr_sector_id == 2
-    chooser_sample_size: 5000
+    chooser_sample_size: null
     chooser_size: null
     choosers: jobs
     constrained_choices: true
     fitted_parameters:
-    - 0.060942630055347224
-    - 1.7345856034012042
-    - -0.12816895961547098
-    - 0.11291310835264003
-    - 1.053486328283189
-    - -0.6290510070610476
-    - 0.2755845934961875
-    - 0.12845828474270715
-    - -0.7097531983541006
+    - 0.052101259587291254
+    - 1.7959253496242589
+    - -0.13731424585766222
+    - 0.11051749657739485
+    - 1.0148253162066891
+    - -0.6677438187987472
+    - 0.2857565651585812
+    - 0.13056347040217162
+    - -0.7016917027544007
     max_iter: null
     mct_intx_ops: null
     model_expression: major_road_node_sum_800_flat + st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
@@ -34,32 +34,32 @@ saved_object:
     out_chooser_filters: (block_id == "-1") & (aggr_sector_id == 2)
     out_choosers: null
     out_column: null
-    summary_table: "                  CHOICEMODELS ESTIMATION RESULTS            \
-        \      \n===================================================================\n\
-        Dep. Var.:                chosen   No. Observations:          5,000\nModel:\
-        \         Multinomial Logit   Df Residuals:              4,991\nMethod:  \
-        \     Maximum Likelihood   Df Model:                      9\nDate:       \
-        \          2026-09-02   Pseudo R-squ.:             0.241\nTime:          \
-        \            14:08   Pseudo R-bar-squ.:         0.241\nAIC:              \
-        \    34,971.588   Log-Likelihood:      -17,476.794\nBIC:                 \
-        \ 35,030.243   LL-Null:             -23,025.851\n============================================================================================================================\n\
+    summary_table: "                   CHOICEMODELS ESTIMATION RESULTS           \
+        \         \n======================================================================\n\
+        Dep. Var.:                chosen   No. Observations:           338,563\nModel:\
+        \         Multinomial Logit   Df Residuals:               338,554\nMethod:\
+        \       Maximum Likelihood   Df Model:                         9\nDate:  \
+        \               2026-09-02   Pseudo R-squ.:                0.244\nTime:  \
+        \                    15:41   Pseudo R-bar-squ.:            0.244\nAIC:   \
+        \            2,357,284.238   Log-Likelihood:      -1,178,633.119\nBIC:   \
+        \            2,357,380.830   LL-Null:             -1,559,140.234\n=============================================================================================================================\n\
         \                                                                        \
-        \     coef   std err         z     P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------------------------------------\n\
+        \     coef   std err          z     P>|z|   Conf. Int.\n-----------------------------------------------------------------------------------------------------------------------------\n\
         major_road_node_sum_800_flat                                             \
-        \  0.0609     0.018     3.466     0.001             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
-        \    1.7346     0.041    42.675     0.000             \nst_prop_aggr_sector_id_5_ave_1600_flat\
-        \                                    -0.1282     0.016    -7.824     0.000\
+        \  0.0521     0.002     24.287     0.000             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
+        \    1.7959     0.005    366.402     0.000             \nst_prop_aggr_sector_id_5_ave_1600_flat\
+        \                                    -0.1373     0.002    -68.223     0.000\
         \             \nst_ln_block_groups_mean_home_value                       \
-        \                  0.1129     0.018     6.448     0.000             \nst_ln_block_groups_mean_rent\
-        \                                               1.0535     0.027    39.327\
+        \                  0.1105     0.002     52.785     0.000             \nst_ln_block_groups_mean_rent\
+        \                                               1.0148     0.003    311.996\
         \     0.000             \nst_ln_block_groups_density_housing_units       \
-        \                           -0.6291     0.022   -28.958     0.000        \
-        \     \nst_sum_income_ave_1600_flat                                      \
-        \          0.2756     0.022    12.299     0.000             \nst_is_transit_stop_sum_1600_flat\
-        \                                           0.1285     0.015     8.810   \
-        \  0.000             \nst_total_households_sum_2000_linear               \
-        \                        -0.7098     0.032   -22.344     0.000           \
-        \  \n============================================================================================================================"
+        \                           -0.6677     0.003   -253.950     0.000       \
+        \      \nst_sum_income_ave_1600_flat                                     \
+        \           0.2858     0.003    104.968     0.000             \nst_is_transit_stop_sum_1600_flat\
+        \                                           0.1306     0.002     73.116  \
+        \   0.000             \nst_total_households_sum_2000_linear              \
+        \                         -0.7017     0.004   -184.667     0.000         \
+        \    \n============================================================================================================================="
     tags: []
     template: LargeMultinomialLogitStep
     template_version: 0.3.dev0

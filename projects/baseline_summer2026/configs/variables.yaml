@@ -14,16 +14,16 @@ variables_to_aggregate:
   households: [persons, cars, income, race_of_head, age_of_head, workers, children, tenure,
                recent_mover, rent, home_value]
   jobs: [aggr_sector_id]
-  housing_units: [year_built, unit_type_id]
+  housing_units: [year_built, built_after_2010, unit_type_id]
   blocks: [x, y, acres]
 
-sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housing_unit_capacity, job_capacity]
+sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housing_unit_capacity, job_capacity, built_after_2010]
 
 # Vars used to build prop_<var>_<category> and density_<agent> variables.
 discrete_variables:
   households: [persons, cars, race_of_head, workers, children, tenure, recent_mover]
   jobs: [aggr_sector_id]
-  housing_units: [year_built, unit_type_id]
+  housing_units: [year_built, unit_type_id, built_after_2010]
 
 geog_vars_to_dummify: [county_id]
 
@@ -60,4 +60,8 @@ pandana:
   distances: {start: 400, stop: 5000, step: 400}
   agg_types: [ave, sum]
   decay_types: [linear, flat]
-  variables_to_aggregate: [total_households, total_jobs, sum_income, prop_aggr_sector_id_5, major_road_node]
+  variables_to_aggregate: [total_households, total_jobs, sum_income,
+                          major_road_node, prop_aggr_sector_id_1,
+                          prop_aggr_sector_id_2, prop_aggr_sector_id_3,
+                          prop_aggr_sector_id_4, prop_aggr_sector_id_5,
+                          prop_children_0]
