@@ -1,0 +1,68 @@
+estimate_steps:
+  - load_data
+  - build_networks
+  - register_variables
+  - estimate_hlcm
+  - estimate_jlcm
+
+hlcm:
+  choosers: households
+  chooser_sample_size: 5000
+  chooser_filters_template: (recent_mover == 1) & (income_quartile == {value})
+  alternatives: blocks
+  choice_column: block_id
+  constrained_choices: true
+  alt_sample_size: 100
+  alt_capacity: vacant_housing_units
+  out_alt_filters: vacant_housing_units > 0
+  filter_field: income_quartile
+  expl_vars:
+    - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
+    - st_ln_block_groups_mean_rent
+    - st_is_transit_stop_sum_1600_flat
+    - st_block_groups_median_income
+    - st_block_groups_prop_year_built_2022
+    - st_block_groups_prop_children_0
+    - st_ln_block_groups_density_housing_units
+  models: # order seems backwards but this will mean high income is placed first
+    - name: hlcm1  # high income
+      filter_value: 4
+    - name: hlcm2  # mid-high income
+      filter_value: 3
+    - name: hlcm3  # mid-low income
+      filter_value: 2
+    - name: hlcm4  # low income
+      filter_value: 1
+
+jlcm:
+  choosers: jobs
+  chooser_sample_size: 5000
+  chooser_filters_template: aggr_sector_id == {value}
+  alternatives: blocks
+  choice_column: block_id
+  constrained_choices: true
+  alt_sample_size: 100
+  alt_capacity: vacant_job_spaces
+  out_alt_filters: vacant_job_spaces > 0
+  filter_field: aggr_sector_id
+  expl_vars:
+    - major_road_node_sum_800_flat
+    - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
+    - st_prop_aggr_sector_id_5_ave_1600_flat
+    - st_ln_block_groups_mean_home_value
+    - st_ln_block_groups_mean_rent
+    - st_ln_block_groups_density_housing_units
+    - st_sum_income_ave_1600_flat
+    - st_is_transit_stop_sum_1600_flat
+    - st_total_households_sum_2000_linear
+  models:
+    - name: jlcm1  # Agriculture, Mining, Utilities & Construction
+      filter_value: 1
+    - name: jlcm2  # Manufacturing, Wholesale Trade, Transportation & Warehousing
+      filter_value: 2
+    - name: jlcm3  # Retail Trade, Arts/Entertainment/Recreation, Accommodation & Food Services
+      filter_value: 3
+    - name: jlcm4  # Information, Finance, Real Estate, Professional/Management/Admin Services
+      filter_value: 4
+    - name: jlcm5  # Educational Services, Health Care, Government
+      filter_value: 5

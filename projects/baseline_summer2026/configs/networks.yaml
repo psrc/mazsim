@@ -1,0 +1,7 @@
+# Configuration for the "build_networks" step in data.py.
+
+precompute_distance: 3000
+reserve_num_graphs: 2
+major_edge_types: [motorway_node, motorway_link_node, trunk_node, trunk_link_node,
+                    primary_node, primary_link_node]
+major_no_highway_edge_types: [trunk_node, trunk_link_node, primary_node, primary_link_node]

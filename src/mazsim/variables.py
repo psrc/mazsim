@@ -34,12 +34,34 @@ def register_geography_ids() -> None:
         blocks = blocks.to_frame(blocks.local_columns)
         return pd.Series(blocks.index.values, index=blocks.index).astype(str).str.slice(0, 13).astype("int64")
 
+
+def register_block_variables() -> None:
+    """Register derived block-level variables"""
+
+    @orca.column("blocks", "housing_unit_capacity", cache=True)
+    def housing_unit_capacity(blocks, block_capacity):
+        return block_capacity.housing_unit_capacity.reindex(blocks.index).fillna(0).astype("int32")
+
+    @orca.column("blocks", "job_capacity", cache=True)
+    def job_capacity(blocks, block_capacity):
+        return block_capacity.job_capacity.reindex(blocks.index).fillna(0).astype("int32")
+
+
 def register_household_variables() -> None:
     """Register derived household variables"""
 
-    @orca.column("households", "income_quartile", cache=True)
+    @orca.column("households", "income_quartile", cache=True, cache_scope="iteration")
     def income_quartile(households):
         return pd.qcut(households.income, 4, labels=False) + 1
+
+
+def register_job_variables(config: dict[str, Any]) -> None:
+    """Register derived job variables"""
+    aggr_sector_map = config["aggr_sector_map"]
+
+    @orca.column("jobs", "aggr_sector_id", cache=True, cache_scope="iteration")
+    def aggr_sector_id(jobs):
+        return jobs.sector_id.map(aggr_sector_map)
 
 
 def fillna_median(series: pd.Series) -> pd.Series:
@@ -295,7 +317,9 @@ def register_variables(project_dir: Path) -> None:
 
     register_geography_ids()
     register_agent_geography_ids(config)
+    register_block_variables()
     register_household_variables()
+    register_job_variables(config)
 
     generated_variables: set[str] = set()
     register_aggregation_variables(config, generated_variables)

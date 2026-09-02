@@ -1,6 +1,5 @@
-"""Validate project CSV tables against data_schema.yaml and register them with orca."""
+"""Validate project CSV tables against data_schema.yaml (via pandera) and register them with orca."""
 
-import operator
 from pathlib import Path
 from typing import Any
 import pandana as pdna
@@ -8,86 +7,59 @@ import pandana as pdna
 import numpy as np
 import orca
 import pandas as pd
+import pandera.pandas as pa
 import yaml
 
-_DTYPE_MAP: dict[str, type] = {
-    "int64": int,
-    "float64": float,
-    "str": str,
-    "bool": bool,
+_DTYPE_MAP: dict[str, Any] = {
+    "int64": "int64",
+    "float64": "float64",
+    "str": "str",
+    "bool": "bool",
 }
 
-_CONSTRAINT_OPS = {
-    "ge": operator.ge,
-    "le": operator.le,
-    "gt": operator.gt,
-    "lt": operator.lt,
-}
+_CHECK_KEYS = ("ge", "le", "gt", "lt")
 
 # Geographic level
 orca.add_injectable('geography_id', 'block_id')
 
-def _coerce_column(col_name: str, series: pd.Series, dtype_name: str, nullable: bool) -> pd.Series:
-    """Cast `series` to the schema dtype, raising if nulls or bad values are present."""
-    null_mask = series.isna()
-    if null_mask.any():
-        if not nullable:
-            raise ValueError(f"{col_name}: {int(null_mask.sum())} null values not allowed")
-        casted = series.copy()
-        try:
-            casted[~null_mask] = series[~null_mask].astype(_DTYPE_MAP[dtype_name])
-        except (TypeError, ValueError) as exc:
-            raise ValueError(f"{col_name}: cannot cast to {dtype_name} ({exc})") from exc
-        return casted
+def _build_column(col_schema: dict[str, Any], enums: dict[str, Any]) -> pa.Column:
+    """Build a pandera Column from a data_schema.yaml column entry."""
+    checks = []
 
-    try:
-        return series.astype(_DTYPE_MAP[dtype_name])
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"{col_name}: cannot cast to {dtype_name} ({exc})") from exc
+    enum_name = col_schema.get("enum")
+    if enum_name:
+        allowed_values = sorted((enums.get(enum_name) or {}).keys())
+        if allowed_values:
+            checks.append(pa.Check.isin(allowed_values))
 
-
-def _check_enum(col_name: str, series: pd.Series, enum_name: str, enums: dict[str, Any]) -> None:
-    """Raise if any non-null value in `series` falls outside the named enum's keys."""
-    allowed_values = set((enums.get(enum_name) or {}).keys())
-    if not allowed_values:
-        return
-    bad_mask = ~series.isin(allowed_values) & series.notna()
-    if bad_mask.any():
-        bad_values = sorted(series[bad_mask].unique())[:10]
-        raise ValueError(f"{col_name}: {int(bad_mask.sum())} values not in enum {enum_name} (e.g. {bad_values})")
-
-
-def _check_constraints(col_name: str, series: pd.Series, col_schema: dict[str, Any]) -> None:
-    """Raise if any non-null value in `series` violates a ge/le/gt/lt bound from the schema."""
-    for key, op in _CONSTRAINT_OPS.items():
+    for key in _CHECK_KEYS:
         bound = col_schema.get(key)
-        if bound is None:
-            continue
-        bad_mask = ~op(series, bound) & series.notna()
-        if bad_mask.any():
-            raise ValueError(f"{col_name}: {int(bad_mask.sum())} values violate {key}={bound}")
+        if bound is not None:
+            checks.append(getattr(pa.Check, key)(bound))
+
+    return pa.Column(
+        _DTYPE_MAP[col_schema["dtype"]],
+        checks=checks,
+        nullable=col_schema.get("nullable", False),
+        coerce=True,
+    )
+
+
+def _build_schema(table_schema: dict[str, Any], enums: dict[str, Any]) -> pa.DataFrameSchema:
+    """Build a pandera DataFrameSchema from a data_schema.yaml table entry, dropping unlisted columns."""
+    columns = {
+        col_name: _build_column(col_schema, enums) for col_name, col_schema in table_schema["columns"].items()
+    }
+    return pa.DataFrameSchema(columns, strict="filter")
 
 
 def _validate(table_name: str, df: pd.DataFrame, table_schema: dict[str, Any], enums: dict[str, Any]) -> pd.DataFrame:
-    """Validate every column of `df` against `table_name`'s schema using vectorized pandas checks."""
-    columns_schema = table_schema["columns"]
-    expected_columns = list(columns_schema.keys())
-    missing_columns = set(expected_columns) - set(df.columns)
-    if missing_columns:
-        raise ValueError(f"{table_name}: missing columns {sorted(missing_columns)}")
-
-    df = df[expected_columns].copy()
-    for col_name, col_schema in columns_schema.items():
-        series = _coerce_column(col_name, df[col_name], col_schema["dtype"], col_schema.get("nullable", False))
-        df[col_name] = series
-
-        enum_name = col_schema.get("enum")
-        if enum_name:
-            _check_enum(col_name, series, enum_name, enums)
-
-        _check_constraints(col_name, series, col_schema)
-
-    return df
+    """Validate `df` against `table_name`'s schema, collecting every failure before raising."""
+    schema = _build_schema(table_schema, enums)
+    try:
+        return schema.validate(df, lazy=True)
+    except pa.errors.SchemaErrors as exc:
+        raise ValueError(f"{table_name}: schema validation failed\n{exc.failure_cases}") from exc
 
 
 def register_tables(project_dir: Path) -> None:
@@ -125,19 +97,21 @@ def load_data(project_dir):
 
 
 @orca.step()
-def build_networks(blocks, nodes, edges):
+def build_networks(blocks, nodes, edges, project_dir):
+    network_config = yaml.safe_load((project_dir / "configs" / "networks.yaml").read_text())
+
     try:
-        pdna.network.reserve_num_graphs(2)
-    except:
+        pdna.network.reserve_num_graphs(network_config["reserve_num_graphs"])
+    except Exception:
         pass
 
     nodes, edges = nodes.local, edges.local
     print('Number of nodes is %s.' % len(nodes))
     print('Number of edges is %s.' % len(edges))
     net = pdna.Network(nodes["x"], nodes["y"], edges["from"], edges["to"],
-                           edges[["weight"]],twoway=False)
+                        edges[["weight"]], twoway=False)
 
-    precompute_distance = 3000
+    precompute_distance = network_config["precompute_distance"]
     print('Precomputing network for distance %s.' % precompute_distance)
     print('Network precompute starting.')
     net.precompute(precompute_distance)
@@ -146,10 +120,23 @@ def build_networks(blocks, nodes, edges):
     b = blocks.local
     b['node_id'] = net.get_node_ids(b['x'], b['y'])
     orca.add_injectable("net", net)
+    get_node_ids(net, "transit_stops")
 
-    orca.add_table("blocks", b)
-    if 'transit_stops' in orca.list_tables():
-        get_node_ids(net, 'transit_stops')
+    # Adding edge type variables
+    if 'edge_type' in edges.columns:
+        for edge_type in edges.edge_type.unique():
+            to_nodes = edges[edges.edge_type == edge_type]['to'].values
+            from_nodes = edges[edges.edge_type == edge_type]['from'].values
+            relevant_nodes = np.unique(np.concatenate([to_nodes, from_nodes]))
+            b['%s_node' % edge_type] = b.node_id.isin(relevant_nodes).astype('int').astype('float')
+        try:
+            major_edge_types = network_config["major_edge_types"]
+            major_no_highway_types = network_config["major_no_highway_edge_types"]
+            b['motorways_node'] = (b[['motorway_node', 'motorway_link_node']].sum(axis=1) > 0).astype(int).astype('float')
+            b['major_road_node'] = (b[major_edge_types].sum(axis=1) > 0).astype(int).astype('float')
+            b['major_no_highway_node'] = (b[major_no_highway_types].sum(axis=1) > 0).astype(int).astype('float')
+        except KeyError:
+            print('Edge type not available')
 
 def get_node_ids(net, table):
     table_df = orca.get_table(table).to_frame(['x', 'y'])

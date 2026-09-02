@@ -1,7 +1,12 @@
-baseline:  
+# this is the baseline project that a scenario will inherit settings from 
+# leave empty for baseline projects
+parent_baseline: 
+
+base_year: 2020
+end_year: 2060
 
 data_sources:
-# baseline data sources, ignore for scenarios
+# baseline data sources, not required for scenarios
   - blocks: blocks_2020.csv
   - households: synthetic_households.csv
   - jobs: jobs_2020.csv

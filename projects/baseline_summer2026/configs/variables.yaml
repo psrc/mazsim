@@ -13,19 +13,42 @@ aggregation_functions: [mean, median, std, sum]
 variables_to_aggregate:
   households: [persons, cars, income, race_of_head, age_of_head, workers, children, tenure,
                recent_mover, rent, home_value]
-  jobs: [sector_id]
+  jobs: [aggr_sector_id]
   housing_units: [year_built, unit_type_id]
   blocks: [x, y, acres]
 
-sum_vars: [persons, cars, workers, children, recent_mover, acres, housing_unit_capacity, job_capacity]
+sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housing_unit_capacity, job_capacity]
 
 # Vars used to build prop_<var>_<category> and density_<agent> variables.
 discrete_variables:
   households: [persons, cars, race_of_head, workers, children, tenure, recent_mover]
-  jobs: [sector_id]
+  jobs: [aggr_sector_id]
   housing_units: [year_built, unit_type_id]
 
 geog_vars_to_dummify: [county_id]
+
+# Maps 2-digit NAICS sector_id to an aggregated sector category for the jobs.aggr_sector_id column.
+aggr_sector_map:
+  11: 1  # Agriculture, Forestry, Fishing and Hunting
+  21: 1  # Mining, Quarrying, and Oil and Gas Extraction
+  22: 1  # Utilities
+  23: 1  # Construction
+  3133: 2  # Manufacturing
+  42: 2  # Wholesale Trade
+  4445: 3  # Retail Trade
+  4849: 2  # Transportation and Warehousing
+  51: 4  # Information
+  52: 4  # Finance and Insurance
+  53: 4  # Real Estate and Rental and Leasing
+  54: 4  # Professional, Scientific, and Technical Services
+  55: 4  # Management of Companies and Enterprises
+  56: 4  # Administrative and Support and Waste Management and Remediation Services
+  61: 5  # Educational Services
+  62: 5  # Health Care and Social Assistance
+  71: 3  # Arts, Entertainment, and Recreation
+  72: 3  # Accommodation and Food Services
+  81: 4  # Other Services (except Public Administration)
+  98: 5  # Government
 
 skims:
   travel_times: [15, 30, 45]
@@ -37,4 +60,4 @@ pandana:
   distances: {start: 400, stop: 5000, step: 400}
   agg_types: [ave, sum]
   decay_types: [linear, flat]
-  variables_to_aggregate: [total_households, total_jobs]
+  variables_to_aggregate: [total_households, total_jobs, sum_income, prop_aggr_sector_id_5, major_road_node]

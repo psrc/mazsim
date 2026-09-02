@@ -130,6 +130,7 @@ edges:
     from: {dtype: int64}
     to: {dtype: int64}
     weight: {dtype: float64, ge: 0}
+    edge_type: {dtype: str}
 
 job_calib_targets:
   index: tract_id
