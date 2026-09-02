@@ -24,6 +24,9 @@ dependencies = [
     "variable_generators @ git+https://github.com/jkolberg/variable_generators.git",
 ]
 
+[project.scripts]
+mazsim = "mazsim.cli.main:main"
+
 [build-system]
 requires = ["uv_build>=0.9.18,<0.10.0"]
 build-backend = "uv_build"

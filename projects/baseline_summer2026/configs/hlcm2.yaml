@@ -12,13 +12,13 @@ saved_object:
     choosers: households
     constrained_choices: true
     fitted_parameters:
-    - 0.02667024754196595
-    - 0.1275584015384292
-    - -0.07171597878375853
-    - -0.030466126251433218
-    - 0.10572926473961337
-    - -0.05799691431935258
-    - 0.48907332661045405
+    - 0.027169118646317998
+    - 0.13981662939408826
+    - -0.08485854270126272
+    - -0.02377333256018872
+    - 0.11363173218996186
+    - -0.10710071759338614
+    - 0.5503190760471071
     max_iter: null
     mct_intx_ops: null
     model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
@@ -36,23 +36,23 @@ saved_object:
         Dep. Var.:                chosen   No. Observations:          5,000\nModel:\
         \         Multinomial Logit   Df Residuals:              4,993\nMethod:  \
         \     Maximum Likelihood   Df Model:                      7\nDate:       \
-        \          2026-09-02   Pseudo R-squ.:             0.036\nTime:          \
-        \            09:54   Pseudo R-bar-squ.:         0.036\nAIC:              \
-        \    44,409.226   Log-Likelihood:      -22,197.613\nBIC:                 \
-        \ 44,454.847   LL-Null:             -23,025.851\n============================================================================================================================\n\
+        \          2026-09-02   Pseudo R-squ.:             0.042\nTime:          \
+        \            14:07   Pseudo R-bar-squ.:         0.042\nAIC:              \
+        \    44,134.360   Log-Likelihood:      -22,060.180\nBIC:                 \
+        \ 44,179.981   LL-Null:             -23,025.851\n============================================================================================================================\n\
         \                                                                        \
         \     coef   std err         z     P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------------------------------------\n\
         st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time  \
-        \  0.0267     0.029     0.906     0.365             \nst_ln_block_groups_mean_rent\
-        \                                               0.1276     0.020     6.327\
+        \  0.0272     0.029     0.931     0.352             \nst_ln_block_groups_mean_rent\
+        \                                               0.1398     0.020     6.900\
         \     0.000             \nst_is_transit_stop_sum_1600_flat               \
-        \                           -0.0717     0.017    -4.323     0.000        \
+        \                           -0.0849     0.017    -5.116     0.000        \
         \     \nst_block_groups_median_income                                    \
-        \         -0.0305     0.019    -1.610     0.107             \nst_block_groups_prop_year_built_2022\
-        \                                       0.1057     0.014     7.618     0.000\
+        \         -0.0238     0.018    -1.312     0.189             \nst_block_groups_prop_year_built_2022\
+        \                                       0.1136     0.014     8.284     0.000\
         \             \nst_block_groups_prop_children_0                          \
-        \                 -0.0580     0.021    -2.828     0.005             \nst_ln_block_groups_density_housing_units\
-        \                                   0.4891     0.020    24.129     0.000 \
+        \                 -0.1071     0.020    -5.247     0.000             \nst_ln_block_groups_density_housing_units\
+        \                                   0.5503     0.021    26.789     0.000 \
         \            \n============================================================================================================================"
     tags: []
     template: LargeMultinomialLogitStep
