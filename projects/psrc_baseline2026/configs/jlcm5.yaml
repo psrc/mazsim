@@ -12,15 +12,15 @@ saved_object:
     choosers: jobs
     constrained_choices: true
     fitted_parameters:
-    - 0.12912676688834862
-    - 0.58308351860543
-    - 0.6638189847308655
-    - -0.17159693521220923
-    - 0.506508081529257
-    - -0.3856810134467156
-    - -0.17929885630567924
-    - 0.12598522398785142
-    - 0.4043099915514313
+    - 0.12990736765209773
+    - 0.5836866016458775
+    - 0.665311206544839
+    - -0.17138221833711284
+    - 0.5062330945143061
+    - -0.38619388613666006
+    - -0.1810314959783588
+    - 0.1259948197598065
+    - 0.4039570944463832
     max_iter: null
     mct_intx_ops: null
     model_expression: major_road_node_sum_800_flat + st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
@@ -39,26 +39,26 @@ saved_object:
         Dep. Var.:                chosen   No. Observations:           539,604\nModel:\
         \         Multinomial Logit   Df Residuals:               539,595\nMethod:\
         \       Maximum Likelihood   Df Model:                         9\nDate:  \
-        \               2026-09-02   Pseudo R-squ.:                0.213\nTime:  \
-        \                    15:53   Pseudo R-bar-squ.:            0.213\nAIC:   \
-        \            3,912,679.553   Log-Likelihood:      -1,956,330.777\nBIC:   \
-        \            3,912,780.341   LL-Null:             -2,484,968.253\n=============================================================================================================================\n\
+        \               2026-09-11   Pseudo R-squ.:                0.213\nTime:  \
+        \                    09:59   Pseudo R-bar-squ.:            0.213\nAIC:   \
+        \            3,911,884.012   Log-Likelihood:      -1,955,933.006\nBIC:   \
+        \            3,911,984.799   LL-Null:             -2,484,968.253\n=============================================================================================================================\n\
         \                                                                        \
         \     coef   std err          z     P>|z|   Conf. Int.\n-----------------------------------------------------------------------------------------------------------------------------\n\
         major_road_node_sum_800_flat                                             \
-        \  0.1291     0.001     86.209     0.000             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
-        \    0.5831     0.004    153.595     0.000             \nst_prop_aggr_sector_id_5_ave_1600_flat\
-        \                                     0.6638     0.001    736.244     0.000\
+        \  0.1299     0.001     86.706     0.000             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
+        \    0.5837     0.004    153.764     0.000             \nst_prop_aggr_sector_id_5_ave_1600_flat\
+        \                                     0.6653     0.001    736.680     0.000\
         \             \nst_ln_block_groups_mean_home_value                       \
-        \                 -0.1716     0.001   -186.423     0.000             \nst_ln_block_groups_mean_rent\
-        \                                               0.5065     0.002    210.472\
+        \                 -0.1714     0.001   -186.099     0.000             \nst_ln_block_groups_mean_rent\
+        \                                               0.5062     0.002    210.255\
         \     0.000             \nst_ln_block_groups_density_housing_units       \
-        \                           -0.3857     0.002   -184.531     0.000       \
+        \                           -0.3862     0.002   -184.701     0.000       \
         \      \nst_sum_income_ave_1600_flat                                     \
-        \          -0.1793     0.003    -51.352     0.000             \nst_is_transit_stop_sum_1600_flat\
-        \                                           0.1260     0.001     85.466  \
+        \          -0.1810     0.003    -51.764     0.000             \nst_is_transit_stop_sum_1600_flat\
+        \                                           0.1260     0.001     85.470  \
         \   0.000             \nst_total_households_sum_2000_linear              \
-        \                          0.4043     0.004     96.300     0.000         \
+        \                          0.4040     0.004     96.179     0.000         \
         \    \n============================================================================================================================="
     tags: []
     template: LargeMultinomialLogitStep

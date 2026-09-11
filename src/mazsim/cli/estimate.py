@@ -1,4 +1,4 @@
-"""Estimate the household (HLCM) and job (JLCM) location choice models defined in estimate.yaml."""
+"""Estimate the location choice (HLCM/JLCM/HULCM) and price (HUPM) models defined in estimate.yaml."""
 
 import argparse
 from pathlib import Path
@@ -9,7 +9,7 @@ import orca
 import yaml
 from urbansim.models import util
 from urbansim_templates import modelmanager as mm
-from urbansim_templates.models import LargeMultinomialLogitStep
+from urbansim_templates.models import LargeMultinomialLogitStep, OLSRegressionStep
 
 # side-effect imports: registers the load_data/build_networks/register_variables orca steps
 from mazsim import data_loader, variables
@@ -45,6 +45,21 @@ def _fit_submodel(config: dict[str, Any], model_config: dict[str, Any]) -> None:
     mm.register(m)  # overwrites any previously registered model of the same name
 
 
+def _fit_hupm_submodel(config: dict[str, Any], model_config: dict[str, Any]) -> None:
+    """Fit one OLS price sub-model (residential value or rent) and register it with modelmanager."""
+    m = OLSRegressionStep()
+    m.tables = config["tables"]
+    m.filters = model_config["filters"]
+
+    model_spec = {"left_side": model_config["left_side"], "right_side": config["expl_vars"]}
+    m.model_expression = util.str_model_expression(model_spec)
+    m.out_filters = config["out_filters"]
+    m.out_column = model_config["left_side"]
+    m.fit()
+    m.name = model_config["name"]
+    mm.register(m)  # overwrites any previously registered model of the same name
+
+
 @orca.step("estimate_hlcm")
 def estimate_hlcm(project_dir: Path) -> None:
     """Fit and register every HLCM sub-model listed in estimate.yaml."""
@@ -74,6 +89,16 @@ def estimate_hulcm(project_dir: Path) -> None:
 
     for model_config in config["models"]:
         _fit_submodel(config, model_config)
+
+
+@orca.step("estimate_hupm")
+def estimate_hupm(project_dir: Path) -> None:
+    """Fit and register every HUPM sub-model listed in estimate.yaml."""
+    mm.initialize(Path.joinpath(project_dir, "configs"))
+    config = _load_config(project_dir, "hupm")
+
+    for model_config in config["models"]:
+        _fit_hupm_submodel(config, model_config)
 
 
 def add_run_args(parser):
