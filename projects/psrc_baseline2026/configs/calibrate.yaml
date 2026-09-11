@@ -1,0 +1,31 @@
+calibration_steps:
+  - load_data
+  - build_networks
+  - register_variables
+  - setup_lcms
+  - calibrate_hlcm
+  - calibrate_jlcm
+  - calibrate_hulcm
+
+
+# aggregate growth = target column sum / (base_year - historic_year)
+base_year: 2020
+historic_year: 2010
+
+# each of hlcm/jlcm/hulcm accepts these optional keys (defaults shown):
+#   max_iter: 10000        max calibration iterations
+#   tol: 1.0e-13           loss-improvement threshold to stop early
+#   step_size: 0.001       adam optimizer step size
+#   std: false             standardize coefficients before calibrating
+#   county_calib: false    add a per-county indicator to the model expression
+#   param_scale: 0.001     random init scale for county_calib indicator weights
+#   max_alloc_iter: 10     capacity-constrained allocation loop iterations
+hlcm:
+  target_type: household
+  tol: 1.0e-11
+
+jlcm:
+  target_type: job
+
+hulcm:
+  target_type: housing_unit

@@ -1,31 +1,21 @@
-# this is the baseline project that a scenario will inherit settings from 
-# leave empty for baseline projects
-parent_baseline: 
+#----------------------------------------
+# settings registered as orca injectables
+#----------------------------------------
 
 base_year: 2020
 end_year: 2060
 
-data_sources:
-# baseline data sources, not required for scenarios
-  - blocks: blocks_2020.csv
-  - households: synthetic_households.csv
-  - jobs: jobs_2020.csv
-  - housing_units: synthetic_housing_units.csv
-  - persons: synthetic_persons.csv
-  - transit_stops: transit_stops.csv
-  - nodes: nodes.csv
-  - edges: edges.csv
-  - job_calib_targets: job_calib_targets.csv
-  - household_calib_targets: household_calib_targets.csv
-  - housing_unit_calib_targets: housing_unit_calib_targets.csv
-  - travel_data: travel_data.csv
+calibrated: true
 
-# scenario data sources
-  - block_capacity: block_capacity_0828_2026.csv
-  - annual_household_control_totals: luvit_household_control_totals.csv
-  - annual_employment_control_totals: luvit_employment_control_totals.csv
+# control total type (regional or subregional)
+hh_ct_type: regional
+job_ct_type: regional
 
-orca_preprocessing_steps:
+# orca steps to run during simulation:
+preprocessing_steps:
   - load_data
   - build_networks
   - register_variables
+  - setup_lcms
+
+simulation_steps:

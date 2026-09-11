@@ -1,7 +1,4 @@
 import orca
-import os
-import yaml
-from urbansim.utils import misc
 from urbansim_templates import modelmanager as mm
 import copy
 
@@ -28,29 +25,18 @@ def generate_subregion_model(subregion, segment):
 
 @orca.step('setup_lcms')
 def setup_lcms():
-    hlcm_step_names = []
-    jlcm_step_names = []
-    hulcm_step_names = []
-    location_choice_models = {}
-    models = []
-    subregion_models = []
-
-    if orca.get_injectable('calibrated'):
-        yaml_file = 'yaml_configs_calib.yaml'
-        calib_option = 'calib'
-    else:
-        yaml_file = 'yaml_configs.yaml'
-        calib_option = 'non_calib'
-
-    with open(os.path.join(misc.configs_dir(), yaml_file)) as f:
-        config = yaml.safe_load(f)
-    orca.add_injectable('yaml_configs', config)
-
+    """Register hlcm/jlcm/hulcm step names from the 'submodel_list'/'submodel_list_calib' injectable."""
     subregional_ct_dict = {'hlcm':orca.get_injectable('hh_ct_type'),
                             'hulcm':orca.get_injectable('hh_ct_type'),
-                            'jlcm':orca.get_injectable('emp_ct_type')}
+                            'jlcm':orca.get_injectable('job_ct_type')}
 
-    models_from_yaml = orca.get_injectable('yaml_configs')
+    # calibration runs always fit the uncalibrated submodels; simulation runs use the
+    # calibrated submodels only when 'calibrated' is set in settings.yaml
+    running_calibrate = orca.get_injectable('running_calibrate')
+    use_calibrated_submodels = orca.get_injectable('calibrated') and not running_calibrate
+    submodel_list_name = 'submodel_list_calib' if use_calibrated_submodels else 'submodel_list'
+    models_from_yaml = orca.get_injectable(submodel_list_name)
+
     models = []
     hreloc_models = []
     reg_jlcms =[]

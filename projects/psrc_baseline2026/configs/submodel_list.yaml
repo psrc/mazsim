@@ -1,0 +1,37 @@
+# lcm sub-model yaml files registered by setup_lcms
+submodel_list:
+  hulcm:
+    - hulcm1.yaml
+    - hulcm2.yaml
+    - hulcm3.yaml
+    - hulcm4.yaml
+  hlcm:
+    - hlcm1.yaml
+    - hlcm2.yaml
+    - hlcm3.yaml
+    - hlcm4.yaml
+  jlcm:
+    - jlcm5.yaml
+    - jlcm4.yaml
+    - jlcm3.yaml
+    - jlcm2.yaml
+    - jlcm1.yaml
+
+# calibrated lcm sub-model yaml files registered by setup_lcms
+submodel_list_calib:
+  hulcm:
+    - hulcm1_calib.yaml
+    - hulcm2_calib.yaml
+    - hulcm3_calib.yaml
+    - hulcm4_calib.yaml
+  hlcm:
+    - hlcm1_calib.yaml
+    - hlcm2_calib.yaml
+    - hlcm3_calib.yaml
+    - hlcm4_calib.yaml
+  jlcm:
+    - jlcm5_calib.yaml
+    - jlcm4_calib.yaml
+    - jlcm3_calib.yaml
+    - jlcm2_calib.yaml
+    - jlcm1_calib.yaml

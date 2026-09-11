@@ -364,14 +364,16 @@ class Edges(pa.DataFrameModel):
 
 class JobCalibTargets(pa.DataFrameModel):
     """
-    Job calibration targets by tract.
+    Job calibration targets by tract and aggregate sector.
 
-    tract_id: unique tract ID
+    tract_id: tract ID (repeated per aggr_sector_id)
+    aggr_sector_id: aggregated employment sector, see aggr_sector_map in variables.yaml
     jobs_2020, jobs_2010: observed job counts
     jobs_target: target job count
     """
 
-    tract_id: int = pa.Field(unique=True, ge=0)
+    tract_id: int = pa.Field(ge=0)
+    aggr_sector_id: int = pa.Field(isin=[1, 2, 3, 4, 5])
     jobs_2020: float = pa.Field(ge=0)
     jobs_2010: float = pa.Field(ge=0)
     jobs_target: float = pa.Field()
@@ -520,9 +522,6 @@ TABLE_INDEXES: dict[str, str | list[str]] = {
     "jobs": "job_id",
     "housing_units": "unit_id",
     "nodes": "id",
-    "job_calib_targets": "tract_id",
-    "household_calib_targets": "tract_id",
-    "housing_unit_calib_targets": "tract_id",
     "travel_data": ["from_zone_id", "to_zone_id"],
     "block_capacity": "block_id",
 }

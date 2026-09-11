@@ -38,14 +38,37 @@ def register_geography_ids() -> None:
 def register_block_variables() -> None:
     """Register derived block-level variables"""
 
+    # household lcm capacity variable
+    @orca.column('blocks', 'vacant_housing_units', cache=False, cache_scope = 'step')
+    def vacant_housing_units(blocks, households):
+        return blocks.total_housing_units.sub(
+            households.block_id.value_counts(), fill_value=0)
+
     @orca.column("blocks", "housing_unit_capacity", cache=True)
     def housing_unit_capacity(blocks, block_capacity):
         return block_capacity.housing_unit_capacity.reindex(blocks.index).fillna(0).astype("int32")
+
+    # housing unit lcm capacity variable
+    @orca.column('blocks', 'vacant_hu_spaces', cache=False, cache_scope = 'step')
+    def vacant_hu_spaces(blocks, housing_units):
+        return blocks.housing_unit_capacity.sub(
+            housing_units.block_id.value_counts(), fill_value=0)
 
     @orca.column("blocks", "job_capacity", cache=True)
     def job_capacity(blocks, block_capacity):
         return block_capacity.job_capacity.reindex(blocks.index).fillna(0).astype("int32")
 
+    # job lcm capacity variable
+    @orca.column('blocks', 'vacant_job_spaces', cache=False, cache_scope = 'step')
+    def vacant_job_spaces(blocks, jobs):
+        return blocks.job_capacity.sub(
+            jobs.block_id.value_counts(), fill_value=0)
+
+    # filter variable for when no filter is needed
+    @orca.column('blocks', 'all_blocks', cache=True)
+    def all_blocks(blocks):
+        return pd.Series(np.ones(len(blocks.total_residential_units)).astype('int32'),
+                        index=blocks.index)
 
 def register_household_variables() -> None:
     """Register derived household variables"""

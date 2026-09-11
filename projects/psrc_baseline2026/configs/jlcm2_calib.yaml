@@ -1,0 +1,40 @@
+modelmanager_version: 0.3.dev0
+
+saved_object:
+    alt_capacity: vacant_job_spaces
+    alt_filters: null
+    alt_sample_size: 100
+    alternatives: blocks
+    choice_column: block_id
+    chooser_filters: aggr_sector_id == 2
+    chooser_sample_size: null
+    chooser_size: null
+    choosers: jobs
+    constrained_choices: true
+    fitted_parameters:
+    - -0.40014965727957547
+    - -0.11728055512345915
+    - 0.18139381170537475
+    - 0.7833879111211753
+    - 0.5784730158044543
+    - 1.0612589284498608
+    - -1.8196750118602991
+    - -0.6057140621129651
+    - 2.7022844278531837
+    max_iter: null
+    mct_intx_ops: null
+    model_expression: major_road_node_sum_800_flat + st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
+        + st_prop_aggr_sector_id_5_ave_1600_flat + st_ln_block_groups_mean_home_value
+        + st_ln_block_groups_mean_rent + st_ln_block_groups_density_housing_units
+        + st_sum_income_ave_1600_flat + st_is_transit_stop_sum_1600_flat + st_total_households_sum_2000_linear
+        - 1
+    name: jlcm2_calib
+    out_alt_filters: vacant_job_spaces > 0
+    out_alternatives: null
+    out_chooser_filters: (block_id == "-1") & (aggr_sector_id == 2)
+    out_choosers: null
+    out_column: null
+    summary_table: null
+    tags: []
+    template: LargeMultinomialLogitStep
+    template_version: 0.3.dev0

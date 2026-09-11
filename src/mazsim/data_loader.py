@@ -1,7 +1,6 @@
 """Validate project CSV tables against data_model.py schemas (via pandera) and register them with orca."""
 
 from pathlib import Path
-
 import numpy as np
 import orca
 import pandana as pdna  # type: ignore[import-not-found]
@@ -29,7 +28,7 @@ def register_tables(project_dir: Path) -> None:
     configs_dir = project_dir / "configs"
     data_dir = project_dir / "data"
 
-    settings = yaml.safe_load((configs_dir / "settings.yaml").read_text())
+    settings = yaml.safe_load((configs_dir / "data_sources.yaml").read_text())
 
     for entry in settings["data_sources"]:
         ((table_name, filename),) = entry.items()
@@ -61,6 +60,16 @@ def register_aggregation_table(table_name, table_id):
         return df
     return func
 
+def register_config_injectable_from_yaml(yaml_file, config_dir):
+    """
+    Generator function for YAML-based config injectables.
+    """
+    with open(Path.joinpath(config_dir, yaml_file)) as f:
+        file = yaml.safe_load(f)
+    for setting in file:
+        orca.add_injectable(setting, file[setting])
+        print(f'Registered injectable: {setting}: {file[setting]}')
+
 
 @orca.step("load_data")
 def load_data(project_dir):
@@ -73,6 +82,10 @@ def load_data(project_dir):
                     ('zones', 'zone_id')]
     for geog in aggregate_geos:
         register_aggregation_table(geog[0], geog[1])
+
+    # register injectables from YAML configs
+    for yaml_file in ["settings.yaml","submodel_list.yaml"]:
+        register_config_injectable_from_yaml(yaml_file, Path.joinpath(project_dir, "configs"))
 
 
 @orca.step()

@@ -1,0 +1,37 @@
+modelmanager_version: 0.3.dev0
+
+saved_object:
+    alt_capacity: vacant_housing_units
+    alt_filters: null
+    alt_sample_size: 100
+    alternatives: blocks
+    choice_column: block_id
+    chooser_filters: (recent_mover == 1) & (income_quartile == 1)
+    chooser_sample_size: null
+    chooser_size: null
+    choosers: households
+    constrained_choices: true
+    fitted_parameters:
+    - 0.4425328158742536
+    - -0.3543646660244546
+    - -0.13497887622086474
+    - 0.02143941976050951
+    - -0.032993203369041685
+    - -0.3042181389294933
+    - 0.08766645324983706
+    max_iter: null
+    mct_intx_ops: null
+    model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
+        + st_ln_block_groups_mean_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
+        + st_block_groups_prop_built_after_2010_1 + st_block_groups_prop_children_0
+        + st_ln_block_groups_density_housing_units - 1
+    name: hlcm4_calib
+    out_alt_filters: vacant_housing_units > 0
+    out_alternatives: null
+    out_chooser_filters: (block_id == "-1") & (income_quartile == 1)
+    out_choosers: null
+    out_column: null
+    summary_table: null
+    tags: []
+    template: LargeMultinomialLogitStep
+    template_version: 0.3.dev0

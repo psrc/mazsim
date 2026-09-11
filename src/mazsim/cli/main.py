@@ -22,11 +22,11 @@ def main():
         description=estimate.run.__doc__,
     )
 
-    # run_model.add_subcommand(
-    #     name="calibrate",
-    #     args_func=calibrate.add_run_args,
-    #     exec_func=calibrate.run,
-    #     description=calibrate.run.__doc__,
-    # )
+    run_model.add_subcommand(
+        name="calibrate",
+        args_func=calibrate.add_run_args,
+        exec_func=calibrate.run,
+        description=calibrate.run.__doc__,
+    )
 
     sys.exit(run_model.execute())

@@ -74,8 +74,8 @@ hulcm:
   choice_column: block_id
   constrained_choices: true
   alt_sample_size: 50
-  alt_capacity: vacant_du_spaces_clip
-  out_alt_filters: vacant_du_spaces_clip > 0
+  alt_capacity: vacant_hu_spaces
+  out_alt_filters: vacant_hu_spaces > 0
   out_chooser_filters_template: (block_id == "-1") & (year_built > 2010) & (unit_type_id == {value})
   expl_vars:
     - major_road_node_sum_800_flat
