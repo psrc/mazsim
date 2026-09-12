@@ -1,0 +1,21 @@
+# orca steps to run during simulation:
+preprocessing_steps:
+  - load_data
+  - build_networks
+  - register_variables
+  - setup_lcms
+  - setup_hupm
+
+simulation_steps:
+  - jobs_transition
+  - households_transition
+  - residential_unit_vacancy_transition
+  - rdplcms
+  - repm_rent1
+  - repm_value1
+  - clip_price_data
+  - elcms
+  - hlcms
+  - clip_price_data
+  - inform_unplaced_agents
+  - generate_indicators

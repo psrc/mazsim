@@ -11,11 +11,6 @@ calibrated: true
 hh_ct_type: regional
 job_ct_type: regional
 
-# orca steps to run during simulation:
-preprocessing_steps:
-  - load_data
-  - build_networks
-  - register_variables
-  - setup_lcms
-
-simulation_steps:
+# use growth rates if no control totals are available
+# job_growth_rate: 0.03
+# household_growth_rate: 0.03

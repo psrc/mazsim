@@ -8,12 +8,12 @@ from mazsim import __version__, __doc__
 
 def main():
     run_model = CLI(version=__version__, description=__doc__)
-    # run_model.add_subcommand(
-    #     name="simulate",
-    #     args_func=simulate.add_run_args,
-    #     exec_func=simulate.run,
-    #     description=simulate.run.__doc__,
-    # )
+    run_model.add_subcommand(
+        name="simulate",
+        args_func=simulate.add_run_args,
+        exec_func=simulate.run,
+        description=simulate.run.__doc__,
+    )
 
     run_model.add_subcommand(
         name="estimate",
