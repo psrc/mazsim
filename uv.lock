@@ -3576,7 +3576,7 @@ wheels = [
 [[package]]
 name = "variable-generators"
 version = "0.1"
-source = { git = "https://github.com/jkolberg/variable_generators.git#2247dfe98ce6ebed3bdfda7cf66b8bd43a89f179" }
+source = { git = "https://github.com/jkolberg/variable_generators.git#1b720d66e3189c0e38c4303e3775525a33c68d1e" }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },

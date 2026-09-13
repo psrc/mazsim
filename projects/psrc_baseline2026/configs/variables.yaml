@@ -1,5 +1,14 @@
 # Configuration for orca variable registration (the "register_variables" step in variables.py).
 
+# The finest geography; every other geography nests within it and variables land on it.
+base_geography: {table: blocks, id: block_id}
+
+# Parent geography ids carved out of the base geography's index, which is a 15-digit census block id.
+geography_ids:
+  - {name: county_id, slice: [0, 6]}
+  - {name: tract_id, slice: [0, 12]}
+  - {name: block_group_id, slice: [0, 13]}
+
 geographic_levels:
   - [block_groups, block_group_id]
   - [tracts, tract_id]
@@ -25,7 +34,99 @@ discrete_variables:
   jobs: [aggr_sector_id]
   housing_units: [year_built, unit_type_id, built_after_2010]
 
+# Numerator/denominator agent pairs for ratio_<a>_to_<b> at every geography.
+ratio_variables:
+  - [jobs, households]
+  - [households, housing_units]
+
+# Agents getting a density_<agent> variable. make_density_var divides by sum_acres,
+# so the area variable must appear in sum_vars above.
+density_agents: [households, jobs, housing_units]
+
 geog_vars_to_dummify: [county_id]
+
+# Project-specific derived columns. Each entry is dispatched on `kind` to a generator in
+# variable_generators; `table`/`name` are positional, every other key is passed through.
+# Registered before the aggregation pass, so these are available to aggregate/disaggregate.
+derived_variables:
+  - table: blocks
+    name: housing_unit_capacity
+    kind: join
+    from_table: block_capacity
+    from_column: housing_unit_capacity
+    fillna: 0
+    dtype: int32
+    cache_scope: forever
+
+  - table: blocks
+    name: job_capacity
+    kind: join
+    from_table: block_capacity
+    from_column: job_capacity
+    fillna: 0
+    dtype: int32
+    cache_scope: forever
+
+  # LCM capacity variables. Uncached so each placement step sees the prior step's agents.
+  - table: blocks
+    name: vacant_housing_units
+    kind: difference
+    subtract_from: total_housing_units
+    subtract:
+      count_of: households
+      key: block_id
+    cache: false
+    cache_scope: step
+
+  - table: blocks
+    name: vacant_hu_spaces
+    kind: difference
+    subtract_from: housing_unit_capacity
+    subtract:
+      count_of: housing_units
+      key: block_id
+    cache: false
+    cache_scope: step
+
+  - table: blocks
+    name: vacant_job_spaces
+    kind: difference
+    subtract_from: job_capacity
+    subtract:
+      count_of: jobs
+      key: block_id
+    cache: false
+    cache_scope: step
+
+  # Stands in for a filter expression where a submodel needs no filter.
+  - table: blocks
+    name: all_blocks
+    kind: constant
+    value: 1
+    dtype: int32
+    cache_scope: forever
+
+  - table: households
+    name: income_quartile
+    kind: quantile
+    source: income
+    bins: 4
+    offset: 1
+
+  - table: jobs
+    name: aggr_sector_id
+    kind: map
+    source: sector_id
+    # `mapping` names a top-level key in this file, or may be given inline.
+    mapping: aggr_sector_map
+
+  - table: housing_units
+    name: built_after_2010
+    kind: threshold
+    source: year_built
+    op: ">="
+    value: 2010
+    dtype: int8
 
 # Maps 2-digit NAICS sector_id to an aggregated sector category for the jobs.aggr_sector_id column.
 aggr_sector_map:
@@ -51,17 +152,47 @@ aggr_sector_map:
   98: 5  # Government
 
 skims:
+  # Table holding the zone-to-zone impedances, and the zone table its ids refer to.
+  table: travel_data
+  zone_table: zones
   travel_times: [15, 30, 45]
   variables: [total_jobs, total_households, total_housing_units]
   # Column(s) in travel_data holding the travel time to sum accessibility over.
   columns: [am_single_vehicle_to_work_travel_time]
 
+# Extra tables whose every column is pulled down onto the base geography, beyond the
+# generated variables already disaggregated from each geographic_level.
+disaggregations:
+  - {from: nodes, key: node_id, exclude: [x, y]}
+  - {from: zones, key: zone_id, requires_table: travel_data}
+  - {from: block_groups, key: block_group_id}
+
 pandana:
+  onto_table: blocks
+  # Column holding each row's nearest network node, set by the build_networks step.
+  node_column: node_id
   distances: {start: 400, stop: 5000, step: 400}
   agg_types: [ave, sum]
   decay_types: [linear, flat]
+  # Summarized from onto_table onto itself; each also gets a without_log_ twin.
   variables_to_aggregate: [total_households, total_jobs, sum_income,
+                          'sum_home_value', 'sum_rent',
                           major_road_node, prop_aggr_sector_id_1,
                           prop_aggr_sector_id_2, prop_aggr_sector_id_3,
                           prop_aggr_sector_id_4, prop_aggr_sector_id_5,
                           prop_children_0]
+  # Summarized from a separate points-of-interest table, one variable per entry.
+  poi_variables:
+    - name_template: 'transit_stop_sum_{distance}_{decay}'
+      pois_table: transit_stops
+      variable: hct
+      agg_type: sum
+      log: false
+      dummy_prefix: is_
+
+# Controls the ln_/st_/st_ln_ pass. Columns already starting with a skip_prefix or
+# ending with a skip_suffix are left alone.
+transforms:
+  table: blocks
+  skip_prefixes: [ln, st, st_ln]
+  skip_suffixes: [_id]

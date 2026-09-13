@@ -8,7 +8,7 @@ calibration_steps:
   - calibrate_hulcm
 
 
-# aggregate growth = target column sum / (base_year - historic_year)
+# period spanned by the target columns, used to annualize them
 base_year: 2020
 historic_year: 2010
 

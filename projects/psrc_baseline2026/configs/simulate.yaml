@@ -3,19 +3,17 @@ preprocessing_steps:
   - load_data
   - build_networks
   - register_variables
+  - subregional_ct
   - setup_lcms
   - setup_hupm
 
 simulation_steps:
-  - jobs_transition
-  - households_transition
-  - residential_unit_vacancy_transition
-  - rdplcms
-  - repm_rent1
-  - repm_value1
+  - job_control_totals
+  - household_control_totals
+  - housing_unit_control_totals
+  - housing_unit_lcms
+  - rent_price_model
+  - value_price_model
   - clip_price_data
-  - elcms
-  - hlcms
-  - clip_price_data
-  - inform_unplaced_agents
-  - generate_indicators
+  - job_lcms
+  - household_lcms

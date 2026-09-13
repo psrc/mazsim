@@ -3,13 +3,16 @@
 #----------------------------------------
 
 base_year: 2020
-end_year: 2060
+end_year: 2050
 
 calibrated: true
 
 # control total type (regional or subregional)
-hh_ct_type: regional
-job_ct_type: regional
+hh_ct_type: subregional
+job_ct_type: subregional
+
+# target housing vacancy rate used to size new housing unit supply each year
+housing_vacancy_rate: 0.05
 
 # use growth rates if no control totals are available
 # job_growth_rate: 0.03

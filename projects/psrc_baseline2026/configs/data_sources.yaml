@@ -21,4 +21,4 @@ data_sources:
 # scenario data sources
   - block_capacity: block_capacity_0828_2026.csv
   - annual_household_control_totals: luvit_household_control_totals.csv
-  - annual_employment_control_totals: luvit_employment_control_totals.csv
+  - annual_job_control_totals: luvit_job_control_totals.csv

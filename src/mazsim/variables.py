@@ -11,88 +11,53 @@ from urbansim.utils import misc
 from variable_generators import generators
 
 
+DERIVED_VARIABLE_GENERATORS = {
+    "join": generators.make_join_var,
+    "difference": generators.make_difference_var,
+    "sum": generators.make_sum_var,
+    "quantile": generators.make_quantile_var,
+    "map": generators.make_map_var,
+    "threshold": generators.make_threshold_var,
+    "constant": generators.make_constant_var,
+    "expr": generators.make_expression_var,
+}
+
+
 def _load_config(project_dir: Path) -> dict[str, Any]:
     config_path = project_dir / "configs" / "variables.yaml"
     return yaml.safe_load(config_path.read_text())
 
 
-def register_geography_ids() -> None:
-    """Register county_id/tract_id/block_group_id columns derived from the blocks index."""
+def register_geography_ids(config: dict[str, Any]) -> None:
+    """Register the parent geography id columns carved out of the base geography's index."""
+    table = config["base_geography"]["table"]
 
-    @orca.column("blocks", "county_id", cache=True)
-    def county_id(blocks):
-        blocks = blocks.to_frame(blocks.local_columns)
-        return pd.Series(blocks.index.values, index=blocks.index).astype(str).str.slice(0, 6).astype("int64")
-
-    @orca.column("blocks", "tract_id", cache=True)
-    def tract_id(blocks):
-        blocks = blocks.to_frame(blocks.local_columns)
-        return pd.Series(blocks.index.values, index=blocks.index).astype(str).str.slice(0, 12).astype("int64")
-
-    @orca.column("blocks", "block_group_id", cache=True)
-    def block_group_id(blocks):
-        blocks = blocks.to_frame(blocks.local_columns)
-        return pd.Series(blocks.index.values, index=blocks.index).astype(str).str.slice(0, 13).astype("int64")
+    for spec in config["geography_ids"]:
+        start, stop = spec["slice"]
+        generators.make_index_slice_var(
+            table, spec["name"], start, stop, dtype=spec.get("dtype", "int64")
+        )
 
 
-def register_block_variables() -> None:
-    """Register derived block-level variables"""
+def register_derived_variables(config: dict[str, Any]) -> None:
+    """Register every entry in the config's derived_variables list through its generator kind."""
+    for entry in config.get("derived_variables", []):
+        spec = dict(entry)
+        table = spec.pop("table")
+        name = spec.pop("name")
+        kind = spec.pop("kind")
 
-    # household lcm capacity variable
-    @orca.column('blocks', 'vacant_housing_units', cache=False, cache_scope = 'step')
-    def vacant_housing_units(blocks, households):
-        return blocks.total_housing_units.sub(
-            households.block_id.value_counts(), fill_value=0)
+        if kind not in DERIVED_VARIABLE_GENERATORS:
+            raise ValueError(
+                f"{table}.{name}: unknown derived variable kind {kind!r}; "
+                f"expected one of {sorted(DERIVED_VARIABLE_GENERATORS)}"
+            )
 
-    @orca.column("blocks", "housing_unit_capacity", cache=True)
-    def housing_unit_capacity(blocks, block_capacity):
-        return block_capacity.housing_unit_capacity.reindex(blocks.index).fillna(0).astype("int32")
+        # a string `mapping` refers to a top-level key holding the lookup
+        if isinstance(spec.get("mapping"), str):
+            spec["mapping"] = config[spec["mapping"]]
 
-    # housing unit lcm capacity variable
-    @orca.column('blocks', 'vacant_hu_spaces', cache=False, cache_scope = 'step')
-    def vacant_hu_spaces(blocks, housing_units):
-        return blocks.housing_unit_capacity.sub(
-            housing_units.block_id.value_counts(), fill_value=0)
-
-    @orca.column("blocks", "job_capacity", cache=True)
-    def job_capacity(blocks, block_capacity):
-        return block_capacity.job_capacity.reindex(blocks.index).fillna(0).astype("int32")
-
-    # job lcm capacity variable
-    @orca.column('blocks', 'vacant_job_spaces', cache=False, cache_scope = 'step')
-    def vacant_job_spaces(blocks, jobs):
-        return blocks.job_capacity.sub(
-            jobs.block_id.value_counts(), fill_value=0)
-
-    # filter variable for when no filter is needed
-    @orca.column('blocks', 'all_blocks', cache=True)
-    def all_blocks(blocks):
-        return pd.Series(np.ones(len(blocks.total_residential_units)).astype('int32'),
-                        index=blocks.index)
-
-def register_household_variables() -> None:
-    """Register derived household variables"""
-
-    @orca.column("households", "income_quartile", cache=True, cache_scope="iteration")
-    def income_quartile(households):
-        return pd.qcut(households.income, 4, labels=False) + 1
-
-
-def register_job_variables(config: dict[str, Any]) -> None:
-    """Register derived job variables"""
-    aggr_sector_map = config["aggr_sector_map"]
-
-    @orca.column("jobs", "aggr_sector_id", cache=True, cache_scope="iteration")
-    def aggr_sector_id(jobs):
-        return jobs.sector_id.map(aggr_sector_map)
-
-
-def register_housing_unit_variables() -> None:
-    """Register derived housing unit variables"""
-
-    @orca.column("housing_units", "built_after_2010", cache=True, cache_scope="iteration")
-    def built_after_2010(housing_units):
-        return (housing_units.year_built >= 2010).astype("int8")
+        DERIVED_VARIABLE_GENERATORS[kind](table, name, **spec)
 
 
 def fillna_median(series: pd.Series) -> pd.Series:
@@ -100,16 +65,18 @@ def fillna_median(series: pd.Series) -> pd.Series:
 
 
 def register_agent_geography_ids(config: dict[str, Any]) -> None:
-    """Broadcast block_group_id/tract_id/county_id/zone_id from blocks onto agent tables via block_id."""
+    """Broadcast each geography id from the base geography onto the agent tables via the base id."""
+    base_table = config["base_geography"]["table"]
+    base_id = config["base_geography"]["id"]
     geographic_levels = [tuple(g) for g in config["geographic_levels"]]
-    agents = [agent for agent in config["variables_to_aggregate"] if agent != "blocks"]
+    agents = [agent for agent in config["variables_to_aggregate"] if agent != base_table]
 
     for agent in agents:
         agent_columns = orca.get_table(agent).columns
         for _, geography_id in geographic_levels:
             if geography_id in agent_columns:
                 continue
-            generators.make_disagg_var("blocks", agent, geography_id, "block_id", name_based_on_geography=False)
+            generators.make_disagg_var(base_table, agent, geography_id, base_id, name_based_on_geography=False)
 
 
 def register_aggregation_variables(config: dict[str, Any], generated_variables: set[str]) -> None:
@@ -157,58 +124,67 @@ def register_proportion_variables(config: dict[str, Any], generated_variables: s
 
 
 def register_ratio_and_density_variables(config: dict[str, Any], generated_variables: set[str]) -> None:
-    """Register jobs/households and households/housing_units ratios, plus density_<agent>, at each geography."""
+    """Register the configured agent ratios, plus density_<agent>, at each geography."""
     geographic_levels = [tuple(g) for g in config["geographic_levels"]]
-    discrete_variables = config["discrete_variables"]
 
     for geography_name, _ in geographic_levels:
-        generators.make_ratio_var("jobs", "households", geography_name)
-        generated_variables.add("ratio_jobs_to_households")
+        for numerator, denominator in config["ratio_variables"]:
+            generators.make_ratio_var(numerator, denominator, geography_name)
+            generated_variables.add(f"ratio_{numerator}_to_{denominator}")
 
-        generators.make_ratio_var("households", "housing_units", geography_name)
-        generated_variables.add("ratio_households_to_housing_units")
-
-        for agent in discrete_variables:
+        for agent in config["density_agents"]:
             generators.make_density_var(agent, geography_name)
             generated_variables.add("density_%s" % agent)
 
 
-def register_block_disaggregations(config: dict[str, Any], generated_variables: set[str]) -> None:
-    """Disaggregate geography-level, node-level, zone-level, and block-group-level variables down to blocks."""
+def register_base_geography_disaggregations(config: dict[str, Any], generated_variables: set[str]) -> None:
+    """Disaggregate every generated variable, plus the configured extra tables, down to the base geography."""
+    base_table = config["base_geography"]["table"]
     geographic_levels = [tuple(g) for g in config["geographic_levels"]]
 
     for geography_name, geography_id in geographic_levels:
-        if geography_name == "blocks":
+        if geography_name == base_table:
             continue
         for var in generated_variables:
-            generators.make_disagg_var(geography_name, "blocks", var, geography_id)
+            generators.make_disagg_var(geography_name, base_table, var, geography_id)
 
-    for var in orca.get_table("nodes").columns:
-        if var not in ("x", "y"):
-            generators.make_disagg_var("nodes", "blocks", var, "node_id")
+    for spec in config["disaggregations"]:
+        required = spec.get("requires_table")
+        if required is not None and required not in orca.list_tables():
+            continue
 
-    if "travel_data" in orca.list_tables():
-        for var in orca.get_table("zones").columns:
-            generators.make_disagg_var("zones", "blocks", var, "zone_id", name_based_on_geography=True)
-
-    for var in orca.get_table("block_groups").columns:
-        generators.make_disagg_var("block_groups", "blocks", var, "block_group_id", name_based_on_geography=True)
+        from_table = spec["from"]
+        exclude = set(spec.get("exclude", []))
+        for var in orca.get_table(from_table).columns:
+            if var in exclude:
+                continue
+            generators.make_disagg_var(
+                from_table,
+                base_table,
+                var,
+                spec["key"],
+                name_based_on_geography=spec.get("name_based_on_geography", True),
+            )
 
 
 def register_geographic_dummies(config: dict[str, Any]) -> None:
-    """Register block-level dummy columns for each distinct value of the configured geography columns."""
+    """Register base-geography dummy columns for each distinct value of the configured geography columns."""
+    base_table = config["base_geography"]["table"]
+
     for geog_var in config["geog_vars_to_dummify"]:
-        geog_ids = np.unique(orca.get_table("blocks")[geog_var])
+        geog_ids = np.unique(orca.get_table(base_table)[geog_var])
         for geog_id in geog_ids:
-            generators.make_dummy_variable("blocks", geog_var, geog_id)
+            generators.make_dummy_variable(base_table, geog_var, geog_id)
 
 
-def register_skim_zone_variable(table_name: str, column_name: str, tt: int, var: str, column_time: str):
+def register_skim_zone_variable(zone_table: str, skim_table: str, column_name: str, tt: int, var: str, column_time: str):
     """Register a zone-level column summing `var` reachable within `tt` minutes via the `column_time` skim."""
 
-    @orca.column(table_name, column_name, cache=True, cache_scope="iteration")
-    def column_func(travel_data, zones):
-        data = misc.compute_range(travel_data.to_frame(), zones[var], column_time, tt, agg=np.sum)
+    @orca.column(zone_table, column_name, cache=True, cache_scope="iteration")
+    def column_func():
+        skims = orca.get_table(skim_table).to_frame()
+        zones = orca.get_table(zone_table)
+        data = misc.compute_range(skims, zones[var], column_time, tt, agg=np.sum)
         return pd.Series(data, index=zones.index).fillna(0)
 
     return column_func
@@ -217,11 +193,14 @@ def register_skim_zone_variable(table_name: str, column_name: str, tt: int, var:
 def register_skim_variables(config: dict[str, Any]) -> None:
     """Register zone-level accessibility variables for every travel-time/skim-column/target-variable combination."""
     skims = config["skims"]
+    zone_table = skims["zone_table"]
+    skim_table = skims["table"]
+
     for column_time in skims["columns"]:
         for tt in skims["travel_times"]:
             for var in skims["variables"]:
                 column_name = f"{var}_{tt}_minutes_{column_time}"
-                register_skim_zone_variable("zones", column_name, tt, var, column_time)
+                register_skim_zone_variable(zone_table, skim_table, column_name, tt, var, column_time)
 
 
 def register_pandana_access_variable(
@@ -230,6 +209,7 @@ def register_pandana_access_variable(
     pois_table: str,
     variable_to_summarize: str,
     distance: int,
+    node_column: str = "node_id",
     agg_type: str = "sum",
     decay: str = "linear",
     log: bool = True,
@@ -239,13 +219,13 @@ def register_pandana_access_variable(
     @orca.column(onto_table, column_name, cache=True, cache_scope="iteration")
     def column_func():
         net = orca.get_injectable("net")
-        table = orca.get_table(pois_table).to_frame(["node_id", variable_to_summarize])
-        df = orca.get_table(onto_table).to_frame("node_id")
-        net.set(table.node_id, variable=table[variable_to_summarize])
+        table = orca.get_table(pois_table).to_frame([node_column, variable_to_summarize])
+        df = orca.get_table(onto_table).to_frame(node_column)
+        net.set(table[node_column], variable=table[variable_to_summarize])
         results = net.aggregate(distance, type=agg_type, decay=decay)
         if log:
             results = np.log1p(results)
-        return misc.reindex(results, df.node_id)
+        return misc.reindex(results, df[node_column])
 
     return column_func
 
@@ -264,6 +244,8 @@ def register_accessibility_dummy(table: str, col_name: str, variable: str):
 def register_pandana_variables(config: dict[str, Any]) -> None:
     """Register pandana-based accessibility variables (and their dummies) across distances/decays."""
     pandana_config = config["pandana"]
+    onto_table = pandana_config["onto_table"]
+    node_column = pandana_config["node_column"]
     distances = range(
         pandana_config["distances"]["start"], pandana_config["distances"]["stop"], pandana_config["distances"]["step"]
     )
@@ -277,24 +259,37 @@ def register_pandana_variables(config: dict[str, Any]) -> None:
                 for agg_type in agg_types:
                     var_name = "_".join([variable, agg_type, str(distance), decay])
                     register_pandana_access_variable(
-                        var_name, "blocks", "blocks", variable, distance, agg_type=agg_type, decay=decay
+                        var_name, onto_table, onto_table, variable, distance,
+                        node_column=node_column, agg_type=agg_type, decay=decay,
                     )
                     register_pandana_access_variable(
                         "without_log_" + var_name,
-                        "blocks",
-                        "blocks",
+                        onto_table,
+                        onto_table,
                         variable,
                         distance,
+                        node_column=node_column,
                         agg_type=agg_type,
                         decay=decay,
                         log=False,
                     )
 
-            var_name = f"transit_stop_sum_{distance}_{decay}"
-            register_pandana_access_variable(
-                var_name, "blocks", "transit_stops", "hct", distance, agg_type="sum", decay=decay, log=False
-            )
-            register_accessibility_dummy("blocks", "is_" + var_name, var_name)
+            for poi in pandana_config.get("poi_variables", []):
+                var_name = poi["name_template"].format(distance=distance, decay=decay)
+                register_pandana_access_variable(
+                    var_name,
+                    onto_table,
+                    poi["pois_table"],
+                    poi["variable"],
+                    distance,
+                    node_column=node_column,
+                    agg_type=poi.get("agg_type", "sum"),
+                    decay=decay,
+                    log=poi.get("log", True),
+                )
+                dummy_prefix = poi.get("dummy_prefix")
+                if dummy_prefix:
+                    register_accessibility_dummy(onto_table, dummy_prefix + var_name, var_name)
 
 
 def register_ln_variable(table_name: str, column_to_ln: str):
@@ -323,22 +318,26 @@ def register_standardized_variable(table_name: str, column_to_s: str):
     return column_func
 
 
-def register_log_and_standardized_variables() -> None:
-    """Register ln_/st_/st_ln_ versions of every non-id block column."""
-    block_columns = orca.get_table("blocks").columns
+def register_log_and_standardized_variables(config: dict[str, Any]) -> None:
+    """Register ln_/st_/st_ln_ versions of every eligible column on the transform table."""
+    transforms = config["transforms"]
+    table = transforms["table"]
+    skip_prefixes = tuple(transforms["skip_prefixes"])
+    skip_suffixes = tuple(transforms["skip_suffixes"])
+    columns = orca.get_table(table).columns
 
-    for var in block_columns:
-        if var.startswith(("ln", "st", "st_ln")) or var.endswith("_id"):
+    for var in columns:
+        if var.startswith(skip_prefixes) or var.endswith(skip_suffixes):
             continue
         ln_version = "ln_" + var
         st_version = "st_" + var
         st_ln_version = "st_ln_" + var
-        if ln_version not in block_columns:
-            register_ln_variable("blocks", var)
-        if st_version not in block_columns:
-            register_standardized_variable("blocks", var)
-        if st_ln_version not in block_columns:
-            register_standardized_variable("blocks", ln_version)
+        if ln_version not in columns:
+            register_ln_variable(table, var)
+        if st_version not in columns:
+            register_standardized_variable(table, var)
+        if st_ln_version not in columns:
+            register_standardized_variable(table, ln_version)
 
 
 @orca.step("register_variables")
@@ -346,12 +345,9 @@ def register_variables(project_dir: Path) -> None:
     """Register every derived orca variable: geography ids, aggregations, ratios, disaggregations, skims, and pandana access."""
     config = _load_config(project_dir)
 
-    register_geography_ids()
+    register_geography_ids(config)
     register_agent_geography_ids(config)
-    register_block_variables()
-    register_household_variables()
-    register_job_variables(config)
-    register_housing_unit_variables()
+    register_derived_variables(config)
 
     generated_variables: set[str] = set()
     register_aggregation_variables(config, generated_variables)
@@ -359,9 +355,9 @@ def register_variables(project_dir: Path) -> None:
     register_ratio_and_density_variables(config, generated_variables)
     register_geographic_dummies(config)
 
-    # Must run before register_block_disaggregations, which reads zones.columns to
-    # decide which zone-level variables (including these skims) to disaggregate to blocks.
+    # Must run before register_base_geography_disaggregations, which reads the zone table's columns
+    # to decide which zone-level variables (including these skims) to disaggregate down.
     register_skim_variables(config)
-    register_block_disaggregations(config, generated_variables)
+    register_base_geography_disaggregations(config, generated_variables)
     register_pandana_variables(config)
-    register_log_and_standardized_variables()
+    register_log_and_standardized_variables(config)

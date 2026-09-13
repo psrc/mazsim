@@ -99,7 +99,7 @@ saved_object:
         + st_ln_block_groups_mean_rent + st_total_households_sum_2000_linear + st_block_groups_median_year_built
         + st_is_transit_stop_sum_1600_flat + st_block_groups_median_income + st_block_groups_prop_built_after_2010_1
         + st_prop_children_0_ave_400_flat + st_sum_income_ave_1600_flat + 1
-    name: hupm_rent1
+    name: hupm_rent
     out_column: res_rent
     out_filters: all_blocks == 1
     out_tables: null
@@ -109,8 +109,8 @@ saved_object:
         Dep. Variable:               res_rent   R-squared:                       0.486\n\
         Model:                            OLS   Adj. R-squared:                  0.486\n\
         Method:                 Least Squares   F-statistic:                     1323.\n\
-        Date:                Fri, 11 Sep 2026   Prob (F-statistic):              \
-        \ 0.00\nTime:                        09:59:29   Log-Likelihood:          \
+        Date:                Sat, 12 Sep 2026   Prob (F-statistic):              \
+        \ 0.00\nTime:                        14:31:55   Log-Likelihood:          \
         \  -1.6826e+05\nNo. Observations:               22408   AIC:             \
         \            3.366e+05\nDf Residuals:                   22391   BIC:     \
         \                    3.367e+05\nDf Model:                          16    \

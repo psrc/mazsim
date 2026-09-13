@@ -16,7 +16,8 @@ from urbansim.models import util
 from urbansim_templates import modelmanager as mm
 
 # side-effect imports: registers the load_data/build_networks/register_variables/setup_lcms orca steps
-from mazsim import data_loader, variables, models
+from mazsim import data_loader, submodels, variables
+from mazsim.submodels import initialize_submodels
 
 # maps each lcm name to the agent-letter/target-type conventions used by _model_calibration
 LCM_AGENTS = {
@@ -285,7 +286,7 @@ def _model_calibration(
 
 def _calibrate_lcm(project_dir: Path, lcm: str) -> None:
     """Calibrate every registered sub-model for one LCM against its calib_targets table and re-register it."""
-    mm.initialize(Path.joinpath(project_dir, "configs"))
+    initialize_submodels(project_dir)
     calibrate_config = _load_calibrate_yaml(project_dir)
     lcm_config = calibrate_config[lcm]
 
@@ -294,6 +295,7 @@ def _calibrate_lcm(project_dir: Path, lcm: str) -> None:
     raw_data = calib_dict["calib_raw"]
 
     target_col = TARGET_COLS[lcm_config["target_type"]]
+    # the target column holds change over the whole period, but the lcms allocate one year at a time
     aggr_growth = raw_data[target_col].sum() / (calibrate_config["base_year"] - calibrate_config["historic_year"])
 
     for segment in orca.get_injectable(f"{lcm}_step_names"):

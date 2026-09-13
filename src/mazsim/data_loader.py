@@ -40,11 +40,6 @@ def register_tables(project_dir: Path) -> None:
         if index_col:
             df = df.set_index(index_col)
 
-        if table_name == "blocks":
-            # variable_generators.make_density_var hardcodes the column name "sum_acres", so the
-            # source column that gets aggregated must be named "acres" rather than "acres_land".
-            df = df.rename(columns={"acres_land": "acres"})
-
         orca.add_table(table_name, df)
 
 

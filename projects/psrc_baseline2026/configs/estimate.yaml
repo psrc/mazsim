@@ -16,7 +16,7 @@ hlcm:
   alt_sample_size: 100
   alt_capacity: vacant_housing_units
   out_alt_filters: vacant_housing_units > 0
-  out_chooser_filters_template: (block_id == "-1") & (income_quartile == {value})
+  out_chooser_filters_template: (block_id == -1) & (income_quartile == {value})
   expl_vars:
     - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
     - st_ln_block_groups_mean_rent
@@ -44,7 +44,7 @@ jlcm:
   alt_sample_size: 100
   alt_capacity: vacant_job_spaces
   out_alt_filters: vacant_job_spaces > 0
-  out_chooser_filters_template: (block_id == "-1") & (aggr_sector_id == {value})
+  out_chooser_filters_template: (block_id == -1) & (aggr_sector_id == {value})
   expl_vars:
     - major_road_node_sum_800_flat
     - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
@@ -76,7 +76,7 @@ hulcm:
   alt_sample_size: 50
   alt_capacity: vacant_hu_spaces
   out_alt_filters: vacant_hu_spaces > 0
-  out_chooser_filters_template: (block_id == "-1") & (year_built > 2010) & (unit_type_id == {value})
+  out_chooser_filters_template: (block_id == -1) & (year_built > 2010) & (unit_type_id == {value})
   expl_vars:
     - major_road_node_sum_800_flat
     - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
@@ -126,10 +126,10 @@ hupm:
     - st_prop_children_0_ave_400_flat
     - st_sum_income_ave_1600_flat
   models:
-    - name: hupm_value1  # residential value
-      left_side: res_value
-      filters: (res_value > 0) & (value_impute == 0)
-    - name: hupm_rent1  # residential rent
-      left_side: res_rent
-      filters: (res_rent > 0) & (rent_impute == 0)
+    - name: hupm_value  # residential value
+      left_side: mean_home_value
+      filters: mean_home_value > 0
+    - name: hupm_rent  # residential rent
+      left_side: mean_rent
+      filters: mean_rent > 0
 

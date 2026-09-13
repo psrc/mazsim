@@ -153,22 +153,15 @@ class Blocks(pa.DataFrameModel):
 
     block_id: unique 15-digit census block ID
     zone_id: MAZ the block belongs to
-    x, y: block centroid coordinates
-    res_rent: imputed/observed residential rent
-    res_value: imputed/observed residential value
-    rent_impute, value_impute: whether rent/value was imputed rather than observed
-    acres_land: land area of the block, in acres
+    x, y: block centroid coordinates in epsg: 4326
+    acres: land area of the block, in acres
     """
 
     block_id: int = pa.Field(unique=True, ge=0)
     zone_id: int = pa.Field(ge=0)
     x: float = pa.Field()
     y: float = pa.Field()
-    res_rent: float = pa.Field(ge=0)
-    res_value: float = pa.Field(ge=0)
-    rent_impute: bool = pa.Field()
-    value_impute: bool = pa.Field()
-    acres_land: float = pa.Field(ge=0)
+    acres: float = pa.Field(ge=0)
 
     class Config:
         strict = "filter"
@@ -478,7 +471,7 @@ class AnnualHouseholdControlTotals(pa.DataFrameModel):
         coerce = True
 
 
-class AnnualEmploymentControlTotals(pa.DataFrameModel):
+class AnnualJobControlTotals(pa.DataFrameModel):
     """
     Annual employment control totals by county.
 
@@ -512,7 +505,7 @@ TABLE_MODELS: dict[str, type[pa.DataFrameModel]] = {
     "travel_data": TravelData,
     "block_capacity": BlockCapacity,
     "annual_household_control_totals": AnnualHouseholdControlTotals,
-    "annual_employment_control_totals": AnnualEmploymentControlTotals,
+    "annual_job_control_totals": AnnualJobControlTotals,
 }
 
 # Maps each table to the column(s) orca should set as its index, after validation.

@@ -13,6 +13,7 @@ from urbansim_templates.models import LargeMultinomialLogitStep, OLSRegressionSt
 
 # side-effect imports: registers the load_data/build_networks/register_variables orca steps
 from mazsim import data_loader, variables
+from mazsim.submodels import initialize_submodels
 
 
 def _load_estimate_yaml(project_dir: Path) -> dict[str, Any]:
@@ -63,7 +64,7 @@ def _fit_hupm_submodel(config: dict[str, Any], model_config: dict[str, Any]) -> 
 @orca.step("estimate_hlcm")
 def estimate_hlcm(project_dir: Path) -> None:
     """Fit and register every HLCM sub-model listed in estimate.yaml."""
-    mm.initialize(Path.joinpath(project_dir, "configs"))
+    initialize_submodels(project_dir)
     config = _load_config(project_dir, "hlcm")
 
     for model_config in config["models"]:
@@ -73,7 +74,7 @@ def estimate_hlcm(project_dir: Path) -> None:
 @orca.step("estimate_jlcm")
 def estimate_jlcm(project_dir: Path) -> None:
     """Fit and register every JLCM sub-model listed in estimate.yaml."""
-    mm.initialize(Path.joinpath(project_dir, "configs"))
+    initialize_submodels(project_dir)
     config = _load_config(project_dir, "jlcm")
 
     for model_config in config["models"]:
@@ -84,7 +85,7 @@ def estimate_jlcm(project_dir: Path) -> None:
 
 def estimate_hulcm(project_dir: Path) -> None:
     """Fit and register every HULCM sub-model listed in estimate.yaml."""
-    mm.initialize(Path.joinpath(project_dir, "configs"))
+    initialize_submodels(project_dir)
     config = _load_config(project_dir, "hulcm")
 
     for model_config in config["models"]:
@@ -94,7 +95,7 @@ def estimate_hulcm(project_dir: Path) -> None:
 @orca.step("estimate_hupm")
 def estimate_hupm(project_dir: Path) -> None:
     """Fit and register every HUPM sub-model listed in estimate.yaml."""
-    mm.initialize(Path.joinpath(project_dir, "configs"))
+    initialize_submodels(project_dir)
     config = _load_config(project_dir, "hupm")
 
     for model_config in config["models"]:

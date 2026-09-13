@@ -14,3 +14,7 @@
 6. run estimation with the following command:
     
     ```uv run mazsim estimate -c projects\baseline_summer2026\configs```
+
+7. run calibration with the following command:
+    
+    ```uv run mazsim calibrate -c projects\baseline_summer2026\configs```

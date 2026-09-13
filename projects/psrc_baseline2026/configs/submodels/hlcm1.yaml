@@ -6,53 +6,53 @@ saved_object:
     alt_sample_size: 100
     alternatives: blocks
     choice_column: block_id
-    chooser_filters: (recent_mover == 1) & (income_quartile == 2)
+    chooser_filters: (recent_mover == 1) & (income_quartile == 4)
     chooser_sample_size: null
     chooser_size: null
     choosers: households
     constrained_choices: true
     fitted_parameters:
-    - -0.25084478358025636
-    - 0.5401826034384649
-    - -0.13056818130333067
-    - 1.7095914234463723
-    - -0.049729774318410296
-    - -0.022307860694227098
-    - 0.26527618185407215
+    - -0.08547061313848549
+    - -0.010885728858140223
+    - -0.044033855295502605
+    - 3.4586883134213497
+    - 0.12416869099522623
+    - -0.03453033210712143
+    - 0.26758566535442546
     max_iter: null
     mct_intx_ops: null
     model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
         + st_ln_block_groups_mean_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
         + st_block_groups_prop_built_after_2010_1 + st_block_groups_prop_children_0
         + st_ln_block_groups_density_housing_units - 1
-    name: hlcm3
+    name: hlcm1
     out_alt_filters: vacant_housing_units > 0
     out_alternatives: null
-    out_chooser_filters: (block_id == "-1") & (income_quartile == 2)
+    out_chooser_filters: (block_id == -1) & (income_quartile == 4)
     out_choosers: null
     out_column: null
     summary_table: "                  CHOICEMODELS ESTIMATION RESULTS            \
         \       \n====================================================================\n\
-        Dep. Var.:                chosen   No. Observations:         214,830\nModel:\
-        \         Multinomial Logit   Df Residuals:             214,823\nMethod: \
+        Dep. Var.:                chosen   No. Observations:         189,755\nModel:\
+        \         Multinomial Logit   Df Residuals:             189,748\nMethod: \
         \      Maximum Likelihood   Df Model:                       7\nDate:     \
-        \            2026-09-11   Pseudo R-squ.:              0.076\nTime:       \
-        \               09:51   Pseudo R-bar-squ.:          0.076\nAIC:          \
-        \     1,828,618.909   Log-Likelihood:      -914,302.455\nBIC:            \
-        \   1,828,690.853   LL-Null:             -989,328.711\n============================================================================================================================\n\
+        \            2026-09-12   Pseudo R-squ.:              0.108\nTime:       \
+        \               14:16   Pseudo R-bar-squ.:          0.108\nAIC:          \
+        \     1,558,438.414   Log-Likelihood:      -779,212.207\nBIC:            \
+        \   1,558,509.489   LL-Null:             -873,854.069\n============================================================================================================================\n\
         \                                                                        \
         \     coef   std err         z     P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------------------------------------\n\
         st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time  \
-        \ -0.2508     0.005   -51.862     0.000             \nst_ln_block_groups_mean_rent\
-        \                                               0.5402     0.003   178.864\
-        \     0.000             \nst_is_transit_stop_sum_1600_flat               \
-        \                           -0.1306     0.002   -54.224     0.000        \
+        \ -0.0855     0.005   -16.684     0.000             \nst_ln_block_groups_mean_rent\
+        \                                              -0.0109     0.003    -3.394\
+        \     0.001             \nst_is_transit_stop_sum_1600_flat               \
+        \                           -0.0440     0.003   -15.765     0.000        \
         \     \nst_sum_income_ave_1600_flat                                      \
-        \          1.7096     0.007   255.001     0.000             \nst_block_groups_prop_built_after_2010_1\
-        \                                   -0.0497     0.002   -23.374     0.000\
+        \          3.4587     0.006   561.196     0.000             \nst_block_groups_prop_built_after_2010_1\
+        \                                    0.1242     0.002    59.693     0.000\
         \             \nst_block_groups_prop_children_0                          \
-        \                 -0.0223     0.003    -7.312     0.000             \nst_ln_block_groups_density_housing_units\
-        \                                   0.2653     0.003    82.162     0.000 \
+        \                 -0.0345     0.003   -10.460     0.000             \nst_ln_block_groups_density_housing_units\
+        \                                   0.2676     0.004    75.658     0.000 \
         \            \n============================================================================================================================"
     tags: []
     template: LargeMultinomialLogitStep
