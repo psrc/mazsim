@@ -21,10 +21,10 @@ aggregation_functions: [mean, median, std, sum]
 # Only vars listed in sum_vars get a "sum" aggregation; every var gets the other aggregation_functions.
 variables_to_aggregate:
   households: [persons, cars, income, race_of_head, age_of_head, workers, children, tenure,
-               recent_mover, rent, home_value]
+               recent_mover]
   jobs: [aggr_sector_id]
   housing_units: [year_built, built_after_2010, unit_type_id]
-  blocks: [x, y, acres]
+  blocks: [x, y, acres, res_rent, res_value]
 
 sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housing_unit_capacity, job_capacity, built_after_2010]
 
@@ -176,7 +176,6 @@ pandana:
   decay_types: [linear, flat]
   # Summarized from onto_table onto itself; each also gets a without_log_ twin.
   variables_to_aggregate: [total_households, total_jobs, sum_income,
-                          'sum_home_value', 'sum_rent',
                           major_road_node, prop_aggr_sector_id_1,
                           prop_aggr_sector_id_2, prop_aggr_sector_id_3,
                           prop_aggr_sector_id_4, prop_aggr_sector_id_5,

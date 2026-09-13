@@ -5,7 +5,8 @@ from typing import Any
 from pathlib import Path
 import argparse
 
-from mazsim import control_totals, data_loader, variables
+from mazsim import control_totals, data_loader, submodels, variable_loader
+from mazsim.submodels import initialize_submodels
 
 
 def _load_simulate_yaml(project_dir: Path) -> dict[str, Any]:
@@ -38,6 +39,7 @@ def run(args):
     preprocessing_steps = _load_simulate_yaml(project_dir)["preprocessing_steps"]
     simulation_steps = _load_simulate_yaml(project_dir)["simulation_steps"]
     orca.add_injectable("project_dir", project_dir)
+    initialize_submodels(project_dir)
     iter_vars =_load_simulation_years(project_dir)
     orca.run(preprocessing_steps)
     orca.run(simulation_steps,iter_vars)

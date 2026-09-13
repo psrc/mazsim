@@ -49,7 +49,8 @@ def setup_lcms():
 
     # calibration runs always fit the uncalibrated submodels; simulation runs use the
     # calibrated submodels only when 'calibrated' is set in settings.yaml
-    running_calibrate = orca.get_injectable('running_calibrate')
+    # 'running_calibrate' is only injected by the calibrate command
+    running_calibrate = orca.is_injectable('running_calibrate') and orca.get_injectable('running_calibrate')
     use_calibrated_submodels = orca.get_injectable('calibrated') and not running_calibrate
     submodel_list_name = 'submodel_list_calib' if use_calibrated_submodels else 'submodel_list'
     models_from_yaml = orca.get_injectable(submodel_list_name)
@@ -126,4 +127,14 @@ def housing_unit_lcms():
     steps = orca.get_injectable('hulcm_step_names')
     orca.run(steps, [orca.get_injectable('iter_var')])
 
-
+@orca.step('save_tables')
+def save_tables():
+    year = orca.get_injectable('year')
+    output_tables = orca.get_injectable('output_tables')
+    project_dir = orca.get_injectable('project_dir')
+    export_path = Path.joinpath(project_dir, "output", f"{year}")
+    Path(export_path).mkdir(parents=True, exist_ok=True)
+    for table_name in output_tables:
+        df = orca.get_table(table_name).local
+        df.reset_index().to_csv(f"{export_path}/{table_name}.csv", index=False)
+        print(f"Saved {table_name} to {export_path}")

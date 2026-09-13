@@ -16,7 +16,7 @@ from urbansim.models import util
 from urbansim_templates import modelmanager as mm
 
 # side-effect imports: registers the load_data/build_networks/register_variables/setup_lcms orca steps
-from mazsim import data_loader, submodels, variables
+from mazsim import data_loader, submodels, variable_loader
 from mazsim.submodels import initialize_submodels
 
 # maps each lcm name to the agent-letter/target-type conventions used by _model_calibration

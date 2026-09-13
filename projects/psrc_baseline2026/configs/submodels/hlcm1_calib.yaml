@@ -12,17 +12,17 @@ saved_object:
     choosers: households
     constrained_choices: true
     fitted_parameters:
-    - 0.08266339481341141
-    - -0.2829404947024177
-    - -0.3000433981850257
-    - 3.0831565626059847
-    - -0.2406387221476918
-    - -0.4040634113751099
-    - 0.2994950008297131
+    - 0.1406874496288064
+    - -0.19193819809853144
+    - -0.17080765149917848
+    - 2.778366166827328
+    - -0.24474706143757435
+    - -0.3858409150832382
+    - 0.10301681953141098
     max_iter: null
     mct_intx_ops: null
     model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
-        + st_ln_block_groups_mean_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
+        + st_ln_block_groups_mean_res_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
         + st_block_groups_prop_built_after_2010_1 + st_block_groups_prop_children_0
         + st_ln_block_groups_density_housing_units - 1
     name: hlcm1_calib

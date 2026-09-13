@@ -12,31 +12,32 @@ saved_object:
     choosers: housing_units
     constrained_choices: true
     fitted_parameters:
-    - 0.03159715534217615
-    - 0.19875492126125588
-    - 0.07023673471552183
-    - 0.028104499897230628
-    - 0.1526068163579147
-    - -0.16699923028344624
-    - 0.12994861824736842
-    - 0.15223651429981408
-    - 0.7880860862868172
-    - -0.22257241441607767
-    - -0.0676281539068334
-    - 0.0772738148452703
-    - -0.5339412504946914
-    - 0.4880748976630654
-    - 0.5794874875243611
-    - 2.0354913363108413
+    - 0.06770916818308267
+    - 0.3161384713515356
+    - 0.016920799642834144
+    - 0.057068700163232296
+    - 0.23032551489749833
+    - -0.06317966130458492
+    - 0.15552125037558892
+    - 0.06949054979933873
+    - 0.1302154014409154
+    - -0.06291343804235969
+    - -0.020447568629063315
+    - 0.05700039051644885
+    - -0.7590807743194748
+    - 0.49972449791834633
+    - 0.5107404968280076
+    - 2.04816175088462
     max_iter: null
     mct_intx_ops: null
     model_expression: major_road_node_sum_800_flat + st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
         + st_prop_aggr_sector_id_1_ave_1600_flat + st_prop_aggr_sector_id_2_ave_1600_flat
         + st_prop_aggr_sector_id_3_ave_1600_flat + st_prop_aggr_sector_id_4_ave_1600_flat
-        + st_prop_aggr_sector_id_5_ave_1600_flat + st_ln_block_groups_mean_home_value
-        + st_ln_block_groups_mean_rent + st_total_households_sum_2000_linear + st_block_groups_median_year_built
-        + st_is_transit_stop_sum_1600_flat + st_block_groups_median_income + st_block_groups_prop_built_after_2010_1
-        + st_prop_children_0_ave_400_flat + st_sum_income_ave_1600_flat - 1
+        + st_prop_aggr_sector_id_5_ave_1600_flat + st_ln_block_groups_mean_res_value
+        + st_ln_block_groups_mean_res_rent + st_total_households_sum_2000_linear +
+        st_block_groups_median_year_built + st_is_transit_stop_sum_1600_flat + st_block_groups_median_income
+        + st_block_groups_prop_built_after_2010_1 + st_prop_children_0_ave_400_flat
+        + st_sum_income_ave_1600_flat - 1
     name: hulcm4
     out_alt_filters: vacant_hu_spaces > 0
     out_alternatives: null
@@ -46,40 +47,40 @@ saved_object:
     out_column: null
     summary_table: "                  CHOICEMODELS ESTIMATION RESULTS            \
         \      \n===================================================================\n\
-        Dep. Var.:                chosen   No. Observations:         14,804\nModel:\
-        \         Multinomial Logit   Df Residuals:             14,788\nMethod:  \
+        Dep. Var.:                chosen   No. Observations:         15,441\nModel:\
+        \         Multinomial Logit   Df Residuals:             15,425\nMethod:  \
         \     Maximum Likelihood   Df Model:                     16\nDate:       \
-        \          2026-09-12   Pseudo R-squ.:             0.276\nTime:          \
-        \            14:31   Pseudo R-bar-squ.:         0.276\nAIC:              \
-        \    83,907.071   Log-Likelihood:      -41,937.536\nBIC:                 \
-        \ 84,028.714   LL-Null:             -57,913.589\n============================================================================================================================\n\
+        \          2026-09-13   Pseudo R-squ.:             0.246\nTime:          \
+        \            09:18   Pseudo R-bar-squ.:         0.246\nAIC:              \
+        \    91,110.668   Log-Likelihood:      -45,539.334\nBIC:                 \
+        \ 91,232.985   LL-Null:             -60,405.547\n============================================================================================================================\n\
         \                                                                        \
         \     coef   std err         z     P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------------------------------------\n\
         major_road_node_sum_800_flat                                             \
-        \  0.0316     0.010     3.107     0.002             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
-        \    0.1988     0.028     7.094     0.000             \nst_prop_aggr_sector_id_1_ave_1600_flat\
-        \                                     0.0702     0.014     5.071     0.000\
+        \  0.0677     0.010     7.034     0.000             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
+        \    0.3161     0.025    12.659     0.000             \nst_prop_aggr_sector_id_1_ave_1600_flat\
+        \                                     0.0169     0.013     1.319     0.187\
         \             \nst_prop_aggr_sector_id_2_ave_1600_flat                   \
-        \                  0.0281     0.012     2.316     0.021             \nst_prop_aggr_sector_id_3_ave_1600_flat\
-        \                                     0.1526     0.011    14.201     0.000\
+        \                  0.0571     0.012     4.910     0.000             \nst_prop_aggr_sector_id_3_ave_1600_flat\
+        \                                     0.2303     0.010    23.164     0.000\
         \             \nst_prop_aggr_sector_id_4_ave_1600_flat                   \
-        \                 -0.1670     0.016   -10.763     0.000             \nst_prop_aggr_sector_id_5_ave_1600_flat\
-        \                                     0.1299     0.009    14.106     0.000\
-        \             \nst_ln_block_groups_mean_home_value                       \
-        \                  0.1522     0.010    15.506     0.000             \nst_ln_block_groups_mean_rent\
-        \                                               0.7881     0.018    44.302\
-        \     0.000             \nst_total_households_sum_2000_linear            \
-        \                           -0.2226     0.032    -6.984     0.000        \
-        \     \nst_block_groups_median_year_built                                \
-        \         -0.0676     0.013    -5.072     0.000             \nst_is_transit_stop_sum_1600_flat\
-        \                                           0.0773     0.009     8.559   \
+        \                 -0.0632     0.015    -4.179     0.000             \nst_prop_aggr_sector_id_5_ave_1600_flat\
+        \                                     0.1555     0.009    17.327     0.000\
+        \             \nst_ln_block_groups_mean_res_value                        \
+        \                  0.0695     0.012     5.899     0.000             \nst_ln_block_groups_mean_res_rent\
+        \                                           0.1302     0.016     8.164   \
+        \  0.000             \nst_total_households_sum_2000_linear               \
+        \                        -0.0629     0.031    -2.061     0.039           \
+        \  \nst_block_groups_median_year_built                                   \
+        \      -0.0204     0.013    -1.565     0.118             \nst_is_transit_stop_sum_1600_flat\
+        \                                           0.0570     0.009     6.478   \
         \  0.000             \nst_block_groups_median_income                     \
-        \                        -0.5339     0.014   -38.261     0.000           \
+        \                        -0.7591     0.015   -49.437     0.000           \
         \  \nst_block_groups_prop_built_after_2010_1                             \
-        \       0.4881     0.010    46.584     0.000             \nst_prop_children_0_ave_400_flat\
-        \                                            0.5795     0.015    37.673  \
+        \       0.4997     0.010    49.148     0.000             \nst_prop_children_0_ave_400_flat\
+        \                                            0.5107     0.015    34.990  \
         \   0.000             \nst_sum_income_ave_1600_flat                      \
-        \                          2.0355     0.048    42.280     0.000          \
+        \                          2.0482     0.046    44.507     0.000          \
         \   \n============================================================================================================================"
     tags: []
     template: LargeMultinomialLogitStep

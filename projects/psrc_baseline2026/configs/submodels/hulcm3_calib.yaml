@@ -1,0 +1,51 @@
+modelmanager_version: 0.3.dev0
+
+saved_object:
+    alt_capacity: vacant_hu_spaces
+    alt_filters: null
+    alt_sample_size: 50
+    alternatives: blocks
+    choice_column: block_id
+    chooser_filters: (year_built > 2010) & (unit_type_id == 3)
+    chooser_sample_size: null
+    chooser_size: null
+    choosers: housing_units
+    constrained_choices: true
+    fitted_parameters:
+    - 0.005815212565606879
+    - -0.4596855783211813
+    - 0.014398568618592211
+    - -0.10370394873937071
+    - 0.0022360766900179395
+    - -0.2246157310993975
+    - -0.055007194443341206
+    - -0.09171402991372817
+    - 0.20942090666461136
+    - 0.8361178740752274
+    - -0.14438749050936783
+    - -0.16047629613119876
+    - 0.13080183055744957
+    - -0.20860161011630204
+    - 0.28037884876659014
+    - 0.8116772087974605
+    max_iter: null
+    mct_intx_ops: null
+    model_expression: major_road_node_sum_800_flat + st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
+        + st_prop_aggr_sector_id_1_ave_1600_flat + st_prop_aggr_sector_id_2_ave_1600_flat
+        + st_prop_aggr_sector_id_3_ave_1600_flat + st_prop_aggr_sector_id_4_ave_1600_flat
+        + st_prop_aggr_sector_id_5_ave_1600_flat + st_ln_block_groups_mean_res_value
+        + st_ln_block_groups_mean_res_rent + st_total_households_sum_2000_linear +
+        st_block_groups_median_year_built + st_is_transit_stop_sum_1600_flat + st_block_groups_median_income
+        + st_block_groups_prop_built_after_2010_1 + st_prop_children_0_ave_400_flat
+        + st_sum_income_ave_1600_flat - 1
+    name: hulcm3_calib
+    out_alt_filters: vacant_hu_spaces > 0
+    out_alternatives: null
+    out_chooser_filters: (block_id == -1) & (year_built > 2010) & (unit_type_id ==
+        3)
+    out_choosers: null
+    out_column: null
+    summary_table: null
+    tags: []
+    template: LargeMultinomialLogitStep
+    template_version: 0.3.dev0

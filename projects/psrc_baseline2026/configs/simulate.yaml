@@ -17,3 +17,6 @@ simulation_steps:
   - clip_price_data
   - job_lcms
   - household_lcms
+  - save_tables
+
+random_seed: 42

@@ -1,8 +1,9 @@
 import sys
-from mazsim.cli import CLI
 from mazsim.cli import simulate
 from mazsim.cli import estimate
 from mazsim.cli import calibrate
+from mazsim.cli import validate
+from mazsim.cli import CLI
 
 from mazsim import __version__, __doc__
 
@@ -27,6 +28,13 @@ def main():
         args_func=calibrate.add_run_args,
         exec_func=calibrate.run,
         description=calibrate.run.__doc__,
+    )
+
+    run_model.add_subcommand(
+        name='validate',
+        args_func=validate.add_run_args,
+        exec_func=validate.run,
+        description=validate.run.__doc__,
     )
 
     sys.exit(run_model.execute())

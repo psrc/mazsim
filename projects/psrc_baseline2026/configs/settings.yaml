@@ -17,3 +17,9 @@ housing_vacancy_rate: 0.05
 # use growth rates if no control totals are available
 # job_growth_rate: 0.03
 # household_growth_rate: 0.03
+
+output_tables:
+  - households
+  - persons
+  - jobs
+  - housing_units

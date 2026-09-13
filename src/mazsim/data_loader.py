@@ -66,6 +66,14 @@ def register_config_injectable_from_yaml(yaml_file, config_dir):
         print(f'Registered injectable: {setting}: {file[setting]}')
 
 
+def _register_observed_years():
+    """Register the latest observed year for each observed_data type as an injectable."""
+    df = orca.get_table('observed_data').local
+    latest_years = df.groupby('type')['year'].max()
+    for obs_type, name in (('households', 'observed_hh_year'), ('jobs', 'observed_jobs_year')):
+        orca.add_injectable(name, latest_years[obs_type].item())
+
+
 @orca.step("load_data")
 def load_data(project_dir):
     """Load and register all project tables with orca."""
@@ -82,6 +90,7 @@ def load_data(project_dir):
     for yaml_file in ["settings.yaml","submodel_list.yaml"]:
         register_config_injectable_from_yaml(yaml_file, Path.joinpath(project_dir, "configs"))
 
+    _register_observed_years()
 
 @orca.step()
 def build_networks(blocks, nodes, edges, project_dir):

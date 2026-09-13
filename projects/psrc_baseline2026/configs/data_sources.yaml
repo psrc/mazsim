@@ -17,6 +17,7 @@ data_sources:
   - household_calib_targets: household_calib_targets.csv
   - housing_unit_calib_targets: housing_unit_calib_targets.csv
   - travel_data: travel_data.csv
+  - observed_data: observed_data.csv
 
 # scenario data sources
   - block_capacity: block_capacity_0828_2026.csv

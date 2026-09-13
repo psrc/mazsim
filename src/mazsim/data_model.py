@@ -154,6 +154,10 @@ class Blocks(pa.DataFrameModel):
     block_id: unique 15-digit census block ID
     zone_id: MAZ the block belongs to
     x, y: block centroid coordinates in epsg: 4326
+    res_rent: monthly residential rent
+    res_value: residential property value
+    rent_impute: whether the rent value was imputed
+    value_impute: whether the property value was imputed
     acres: land area of the block, in acres
     """
 
@@ -161,6 +165,10 @@ class Blocks(pa.DataFrameModel):
     zone_id: int = pa.Field(ge=0)
     x: float = pa.Field()
     y: float = pa.Field()
+    res_rent: int = pa.Field()
+    res_value: int = pa.Field()
+    rent_impute: bool = pa.Field()
+    value_impute: bool = pa.Field()
     acres: float = pa.Field(ge=0)
 
     class Config:
@@ -200,8 +208,6 @@ class Households(pa.DataFrameModel):
     building_type: int = pa.Field(isin=BuildingType)
     tenure: int = pa.Field(isin=Tenure)
     income: float = pa.Field()
-    rent: float = pa.Field(ge=0)
-    home_value: float = pa.Field(ge=0)
     children: int = pa.Field(ge=0)
     adults: int = pa.Field(ge=0)
     workers: int = pa.Field(ge=0)
@@ -453,6 +459,26 @@ class BlockCapacity(pa.DataFrameModel):
         coerce = True
 
 
+class ObservedData(pa.DataFrameModel):
+    """
+    Observed counts by block, year, and type, used for validation/comparison.
+
+    block_id: block the observation applies to
+    year: year the observation applies to
+    type: quantity observed (households, jobs, housing_units)
+    value: observed count
+    """
+
+    block_id: int = pa.Field(ge=0)
+    year: int = pa.Field()
+    type: str = pa.Field(isin=["households", "jobs", "housing_units"])
+    value: int = pa.Field(ge=0)
+
+    class Config:
+        strict = "filter"
+        coerce = True
+
+
 class AnnualHouseholdControlTotals(pa.DataFrameModel):
     """
     Annual household control totals by county.
@@ -504,6 +530,7 @@ TABLE_MODELS: dict[str, type[pa.DataFrameModel]] = {
     "housing_unit_calib_targets": HousingUnitCalibTargets,
     "travel_data": TravelData,
     "block_capacity": BlockCapacity,
+    "observed_data": ObservedData,
     "annual_household_control_totals": AnnualHouseholdControlTotals,
     "annual_job_control_totals": AnnualJobControlTotals,
 }
@@ -516,5 +543,5 @@ TABLE_INDEXES: dict[str, str | list[str]] = {
     "housing_units": "unit_id",
     "nodes": "id",
     "travel_data": ["from_zone_id", "to_zone_id"],
-    "block_capacity": "block_id",
+    "block_capacity": "block_id"
 }

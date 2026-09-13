@@ -12,7 +12,7 @@ from urbansim_templates import modelmanager as mm
 from urbansim_templates.models import LargeMultinomialLogitStep, OLSRegressionStep
 
 # side-effect imports: registers the load_data/build_networks/register_variables orca steps
-from mazsim import data_loader, variables
+from mazsim import data_loader, variable_loader
 from mazsim.submodels import initialize_submodels
 
 

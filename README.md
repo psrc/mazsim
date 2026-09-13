@@ -18,3 +18,9 @@
 7. run calibration with the following command:
     
     ```uv run mazsim calibrate -c projects\baseline_summer2026\configs```
+
+8. run validation with the following command:
+
+    ```uv run mazsim validate -c projects\baseline_summer2026\configs```
+
+    validation runs the simulation out the most recent year that's included in the observed_data table. The simulation can then be compared to the observerd data before running the full simulation.
