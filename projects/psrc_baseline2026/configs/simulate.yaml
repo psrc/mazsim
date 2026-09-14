@@ -6,6 +6,8 @@ preprocessing_steps:
   - subregional_ct
   - setup_lcms
   - setup_hupm
+  - save_output_summaries
+  - save_full_tables
 
 simulation_steps:
   - job_control_totals
@@ -17,6 +19,10 @@ simulation_steps:
   - clip_price_data
   - job_lcms
   - household_lcms
-  - save_tables
+  - save_output_summaries
+  - save_full_tables
+
+postprocessing_steps:
+  - archive_results
 
 random_seed: 42

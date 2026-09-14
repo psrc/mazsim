@@ -6,6 +6,7 @@ from pathlib import Path
 import argparse
 
 from mazsim import control_totals, data_loader, submodels, variable_loader
+from mazsim.outputs import get_last_run_number, start_run_log
 from mazsim.submodels import initialize_submodels
 
 
@@ -39,6 +40,9 @@ def run(args):
     preprocessing_steps = _load_simulate_yaml(project_dir)["preprocessing_steps"]
     simulation_steps = _load_simulate_yaml(project_dir)["simulation_steps"]
     orca.add_injectable("project_dir", project_dir)
+    run_number = get_last_run_number(project_dir) + 1
+    orca.add_injectable("run_number", run_number)
+    start_run_log(project_dir, run_number)
     initialize_submodels(project_dir)
     iter_vars =_load_simulation_years(project_dir)
     orca.run(preprocessing_steps)

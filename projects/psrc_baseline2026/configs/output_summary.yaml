@@ -1,0 +1,16 @@
+# tables and variables to be saved to output/output_summaries
+# in the output_summary step.
+
+geography: 
+  - blocks
+  - tracts
+  - zones
+  - counties
+
+variables:
+  - sum_persons
+  - total_households
+  - total_housing_units
+  - total_jobs
+  - housing_unit_capacity
+  - job_capacity

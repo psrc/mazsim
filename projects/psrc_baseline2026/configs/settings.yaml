@@ -18,6 +18,8 @@ housing_vacancy_rate: 0.05
 # job_growth_rate: 0.03
 # household_growth_rate: 0.03
 
+# full tables to be saved to output/results.h5
+# more summmarized output tables are defined in output_summary.yaml
 output_tables:
   - households
   - persons
