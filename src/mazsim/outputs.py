@@ -97,11 +97,24 @@ def archive_results():
                 zipf.write(path, path.name)
         for summary_file in summary_files:
             zipf.write(summary_file, Path('output_summaries') / summary_file.name)
-        for validation_file in sorted((output_dir / 'validation_summaries').glob('*.csv')):
-            zipf.write(validation_file, Path('validation_summaries') / validation_file.name)
         for config_file in config_files:
             zipf.write(config_file, Path('configs') / config_file.relative_to(project_dir / 'configs'))
     print(f"Archived results to {archive_file}")
+
+@orca.step('archive_validation_summaries')
+def archive_validation_summaries():
+    project_dir = orca.get_injectable('project_dir')
+    run_number = orca.get_injectable('run_number')
+    output_dir = Path.joinpath(project_dir, orca.get_injectable('output_dir'))
+    archive_dir = Path.joinpath(output_dir, 'archive')
+    Path(archive_dir).mkdir(parents=True, exist_ok=True)
+    archive_file = archive_dir / f"validation_{run_number}.zip"
+    validation_files = sorted((output_dir / 'validation_summaries').glob('*.csv'))
+    sys.stdout.flush()
+    with zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for validation_file in validation_files:
+            zipf.write(validation_file, validation_file.name)
+    print(f"Archived validation summaries to {archive_file}")
 
 @orca.step('delete_non_archived_run_files')
 def delete_non_archived_run_files():

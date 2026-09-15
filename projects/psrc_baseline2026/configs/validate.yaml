@@ -9,7 +9,8 @@ variables:
   - housing_units
   - jobs
 
-# additional_preprocessing_steps:
+additional_preprocessing_steps:
+  - cache_base_data
 
 
 additional_simulation_steps:
@@ -17,3 +18,4 @@ additional_simulation_steps:
 
 
 # additional_post_processing_steps:
+  # - archive_validation_summaries

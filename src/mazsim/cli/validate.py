@@ -32,6 +32,22 @@ def _load_validate_yaml(project_dir: Path) -> dict[str, Any]:
     return yaml.safe_load(config_path.read_text())
 
 
+@orca.step('cache_base_data')
+def cache_base_data():
+    geographies = orca.get_injectable('validation_geographies')
+    variables = orca.get_injectable('validation_variables')
+    year = orca.get_injectable('year')
+    base_year = orca.get_injectable('base_year')
+    if year > base_year:
+        raise ValueError("cache_base_data step can only be run for the base year")
+
+    total_cols = ['total_' + v for v in variables]
+    for table in geographies:
+        df = orca.get_table(table).to_frame(total_cols)
+        for total_col in total_cols:
+            # Registering a Series rather than a callable makes this a static column that
+            # orca hands back as-is in later years instead of recomputing from the agent tables.
+            orca.add_column(table, f'base_{total_col}', df[total_col].copy())
 
 
 @orca.step('create_validation_summaries')
@@ -50,13 +66,22 @@ def create_validation_summaries():
     output_dir = Path.joinpath(project_dir, 'output', 'validation_summaries')
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    base_year = orca.get_injectable('base_year')
     total_cols = ['total_'+v for v in obs_year_match]
     obs_cols = [f'sum_obs_{v}' for v in obs_year_match]
+    base_cols = [f'base_{c}' for c in total_cols]
+    sim_change_cols = [f'change_{c}' for c in total_cols]
+    obs_change_cols = [f'change_{c}' for c in obs_cols]
     for table in geographies:  
-        df = orca.get_table(table).to_frame(total_cols + obs_cols)
+        df = orca.get_table(table).to_frame(total_cols + obs_cols + base_cols)
+        for total_col, obs_col, base_col, sim_change_col, obs_change_col in zip(
+            total_cols, obs_cols, base_cols, sim_change_cols, obs_change_cols
+        ):
+            df[sim_change_col] = df[total_col] - df[base_col]
+            df[obs_change_col] = df[obs_col] - df[base_col]
         df.to_csv(Path.joinpath(output_dir, f'{table}_{year}.csv'))
-        for variable, total_col, obs_col in zip(obs_year_match, total_cols, obs_cols):
-            save_scatter_html(df, table, variable, total_col, obs_col, year, output_dir)
+        for variable, sim_change_col, obs_change_col in zip(obs_year_match, sim_change_cols, obs_change_cols):
+            save_scatter_html(df, table, variable, sim_change_col, obs_change_col, year, output_dir, base_year)
 
 
 
