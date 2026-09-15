@@ -2,6 +2,8 @@ import orca
 import sys
 import yaml
 from typing import Any
+import time
+import numpy as np
 from pathlib import Path
 import argparse
 
@@ -12,6 +14,10 @@ from mazsim.submodels import initialize_submodels
 
 def _load_simulate_yaml(project_dir: Path) -> dict[str, Any]:
     config_path = project_dir / "configs" / "simulate.yaml"
+    return yaml.safe_load(config_path.read_text())
+
+def _load_observed_yaml(project_dir: Path) -> dict[str, Any]:
+    config_path = project_dir / "configs" / "observed_data.yaml"
     return yaml.safe_load(config_path.read_text())
 
 def _load_simulation_years(project_dir: Path):
@@ -35,18 +41,39 @@ def add_run_args(parser):
 
 
 def run(args):
-    """Run the orca steps listed under preprocessing_steps in simulate.yaml."""
+    """Run the orca steps listed in simulate.yaml."""
+    start_time = time.time()
+
+    # set up project directory and orca injectables
     project_dir = Path(args.configs_dir).parent
-    preprocessing_steps = _load_simulate_yaml(project_dir)["preprocessing_steps"]
-    simulation_steps = _load_simulate_yaml(project_dir)["simulation_steps"]
     orca.add_injectable("project_dir", project_dir)
-    run_number = get_last_run_number(project_dir) + 1
-    orca.add_injectable("run_number", run_number)
-    start_run_log(project_dir, run_number)
-    initialize_submodels(project_dir)
-    iter_vars =_load_simulation_years(project_dir)
-    orca.run(preprocessing_steps)
-    orca.run(simulation_steps,iter_vars)
+    simulate_yaml = _load_simulate_yaml(project_dir)
+    observed_yaml = _load_observed_yaml(project_dir)
+
+    # run preprocessing steps
+    orca.run(simulate_yaml["preprocessing_steps"])
+
+    # setup run iteration length using years from the observed data
+    # start with min observed year
+    obs_year = min(
+        orca.get_injectable(f"observed_{variable}_year")
+        for variable in observed_yaml["types_to_place"]
+    )
+    orca.add_injectable('start_year', obs_year)
+    end_year = orca.get_injectable("end_year")
+    iter_vars = range(obs_year, end_year + 1)
+    
+    # set the random seed for reproducibility
+    np.random.seed(simulate_yaml.get("random_seed", 42))
+
+    # run simulation steps
+    orca.run(simulate_yaml["simulation_steps"], iter_vars)
+
+    # run post-processing steps
+    orca.run(simulate_yaml['postprocessing_steps'])
+
+    end_time = time.time()
+    print(f"Simulation completed in {(end_time - start_time)/60:.2f} minutes")
     sys.exit()
 
 

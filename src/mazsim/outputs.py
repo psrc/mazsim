@@ -1,6 +1,7 @@
 import orca
 import sys
 from pathlib import Path
+import pandas as pd
 import yaml
 import zipfile
 
@@ -15,6 +16,21 @@ def save_output_summaries():
     for geography in cfg['geography']:
         df = orca.get_table(geography).to_frame(variables)
         df.to_csv(Path.joinpath(output_dir, f'{geography}_{year}.csv'))
+
+@orca.step('save_diff_summaries')
+def save_diff_summaries():
+    """Use the exported output summary CSV files to calculate differences between start and end years."""
+    output_dir = Path.joinpath(orca.get_injectable('project_dir'),orca.get_injectable('output_dir'),'output_summaries')
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    cfg = yaml.safe_load(open(Path.joinpath(orca.get_injectable('project_dir'),'configs','output_summary.yaml')))
+    start_year = orca.get_injectable('start_year')
+    end_year = orca.get_injectable('end_year')
+    diff_variables = cfg['diff_variables']
+    for geography in cfg['geography']:
+        df_start = pd.read_csv(Path.joinpath(output_dir, f'{geography}_{start_year}.csv'))
+        df_end = pd.read_csv(Path.joinpath(output_dir, f'{geography}_{end_year}.csv'))
+        df_diff = df_end[diff_variables] - df_start[diff_variables]
+        df_diff.reset_index().to_csv(Path.joinpath(output_dir, f'{geography}_{start_year}_{end_year}_diff.csv'), index=False)
 
 
 class _Tee:
@@ -74,7 +90,8 @@ def save_full_tables():
     print(f"Saving results tables to {export_h5}")
     for table_name in output_tables:
         df = orca.get_table(table_name).local
-        df.to_hdf(export_h5, key=f"{year}/{table_name}", mode="a")
+        with pd.HDFStore(export_h5, mode='a', complib='zlib', complevel=1) as store:
+            store[f'{year}/{table_name}'] = df
 
 
 @orca.step('archive_results')

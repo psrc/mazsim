@@ -9,24 +9,23 @@ preprocessing_steps:
   - register_variables
   - subregional_ct
   - setup_lcms
-  - setup_hupm
-  - save_output_summaries
-  - save_full_tables
 
 simulation_steps:
   - job_control_totals
   - household_control_totals
   - housing_unit_control_totals
+  - place_observed_data
   - housing_unit_lcms
   - rent_price_model
   - value_price_model
   - clip_price_data
   - job_lcms
   - household_lcms
-  - save_output_summaries
   - save_full_tables
+  - save_output_summaries
 
 postprocessing_steps:
+  - save_diff_summaries
   - archive_results
 
 random_seed: 42

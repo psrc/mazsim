@@ -18,3 +18,27 @@ types:
   - households
   - jobs
   - housing_units
+
+place_observed_data: true
+types_to_place:
+  - housing_units
+  - jobs
+
+# How the place_observed_data step forces each type's per-block counts onto the observed
+# values. Agents are drawn from / returned to the unplaced pool left by the control totals;
+# the lcm group's calibrated sub-models supply the per-block weights over segment_column.
+placement:
+  housing_units:
+    table: housing_units
+    lcm_group: hulcm
+    segment_column: unit_type_id
+    year_built_column: year_built
+    # removing units can leave a block with more agents than spaces, so the excess is unplaced
+    reconcile:
+      agents: households
+      linked_tables:
+        persons: household_id
+  jobs:
+    table: jobs
+    lcm_group: jlcm
+    segment_column: aggr_sector_id

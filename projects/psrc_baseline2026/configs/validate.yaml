@@ -15,11 +15,14 @@ clip_percentile: 99
 
 additional_preprocessing_steps:
   - cache_base_data
-
+  - save_full_tables
+  - save_output_summaries
 
 additional_simulation_steps:
   - create_validation_summaries
 
+skip_simulation_steps:
+  - place_observed_data
 
 additional_postprocessing_steps:
   - archive_validation_summaries

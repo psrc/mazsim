@@ -96,7 +96,7 @@ def create_validation_summaries():
 
 
 def run(args):
-    """Run the orca steps listed under preprocessing_steps in simulate.yaml."""
+    """Run the orca steps listed in simulate.yaml."""
     start_time = time.time()
 
     # set up project directory and orca injectables
@@ -126,16 +126,14 @@ def run(args):
 
     # run simulation steps
     additional_simulation_steps = validate_yaml.get('additional_simulation_steps',[])
-    simulation_steps = simulate_yaml["simulation_steps"] + additional_simulation_steps
+    skip_simulation_steps = validate_yaml.get('skip_simulation_steps',[])
+    simulation_steps = [step for step in simulate_yaml["simulation_steps"] + additional_simulation_steps if step not in skip_simulation_steps]
     orca.run(simulation_steps, iter_vars)
 
     # run post-processing steps
     additional_postprocessing_steps = validate_yaml.get('additional_postprocessing_steps',[])
     postprocessing_steps = simulate_yaml['postprocessing_steps'] + additional_postprocessing_steps
     orca.run(postprocessing_steps)
-
-    # run validation summaries
-
 
     end_time = time.time()
     print(f"Simulation completed in {(end_time - start_time)/60:.2f} minutes")

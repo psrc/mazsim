@@ -6,6 +6,8 @@ submodel_groups:
     ct_type: hh_ct_type
   hulcm:
     ct_type: hh_ct_type
+    # unsegmented step names, used by the calibration steps
+    unsegmented_injectable: reg_hulcm_step_names
   jlcm:
     ct_type: job_ct_type
     # unsegmented step names, used by the calibration steps

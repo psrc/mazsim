@@ -224,7 +224,9 @@ def register_pandana_access_variable(
         net.set(table[node_column], variable=table[variable_to_summarize])
         results = net.aggregate(distance, type=agg_type, decay=decay)
         if log:
-            results = np.log1p(results)
+            # signed log: aggregates of signable quantities (e.g. sum_income) can fall
+            # below -1, where plain log1p yields NaN and corrupts the design matrix
+            results = np.sign(results) * np.log1p(np.abs(results))
         return misc.reindex(results, df[node_column])
 
     return column_func

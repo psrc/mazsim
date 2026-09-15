@@ -11,3 +11,10 @@ variables:
   - total_jobs
   - housing_unit_capacity
   - job_capacity
+
+# variables for which the simulation end year subtracted from the first year 
+# (not the base year if observed data is provided) should be calculated.
+diff_variables:
+  - total_households
+  - total_housing_units
+  - total_jobs
