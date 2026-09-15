@@ -1,0 +1,39 @@
+# Configuration for the control total steps in control_totals.py.
+
+# Agent tables are segmented by this column when a *_ct_type setting is subregional.
+# source_column is a computed column on each table, copied to column so transitions
+# carry it onto cloned agents.
+subregion:
+  column: subregion_id
+  source_column: county_id
+  tables: [households, jobs, housing_units, blocks]
+
+# Column stamped with the current year on newly created spaces.
+year_built_column: year_built
+
+# One entry per named control total step.
+transitions:
+  household_control_totals:
+    agents: households
+    controls_table: annual_household_control_totals
+    totals_column: total_number_of_households
+    ct_type: hh_ct_type
+    growth_rate: household_growth_rate
+    # child tables cloned/pruned alongside the agents, keyed by their foreign key
+    linked_tables:
+      persons: household_id
+
+  job_control_totals:
+    agents: jobs
+    controls_table: annual_job_control_totals
+    totals_column: total_number_of_jobs
+    ct_type: job_ct_type
+    growth_rate: job_growth_rate
+
+# Builds enough new spaces to hit the target vacancy rate given the current agent count.
+vacancy_transitions:
+  housing_unit_control_totals:
+    agents: households
+    spaces: housing_units
+    ct_type: hh_ct_type
+    vacancy_rate: housing_vacancy_rate

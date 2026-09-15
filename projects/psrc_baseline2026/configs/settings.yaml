@@ -5,6 +5,12 @@
 data_dir: data
 output_dir: output
 
+# pandera schemas for the tables in data_sources.yaml, relative to this configs dir
+data_model: data_model.py
+
+# column holding each agent's location, at the finest geography in variables.yaml
+geography_id: block_id
+
 base_year: 2020
 end_year: 2050
 

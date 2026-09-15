@@ -1,27 +1,24 @@
-"""Grow the household, job, and housing unit tables each simulation year to match control totals."""
+"""Grow the agent and space tables each simulation year to match the control totals in control_totals.yaml."""
 
 import orca
 import pandas as pd
 from urbansim.developer import developer
 from urbansim.models import GrowthRateTransition, transition
 
-# block_id is an integer in this model, so newly created agents are flagged as unplaced with -1
+from mazsim import config
+
+# geography ids are integers in this model, so newly created agents are flagged as unplaced with -1
 UNPLACED = -1
 
 # control totals use -1 to mean "no upper bound" on a segmentation column
 NO_UPPER_BOUND = 99999999
 
-# settings.yaml values of hh_ct_type/job_ct_type that mean "apply the totals per subregion"
+# settings.yaml values of a *_ct_type setting that mean "apply the totals per subregion"
 SUBREGIONAL_CT_TYPES = ("sub_ct", "subregional", "subregion")
 
-# the settings.yaml control total type injectable that governs each control total table
-CT_TYPE_TABLES = {
-    "hh_ct_type": "annual_household_control_totals",
-    "job_ct_type": "annual_job_control_totals",
-}
 
-# tables that carry a subregion_id once a subregional run has been set up
-SUBREGION_TABLES = ("households", "jobs", "housing_units", "blocks")
+def _config():
+    return config.load_yaml("control_totals.yaml")
 
 
 @orca.injectable("year")
@@ -37,18 +34,24 @@ def is_subregional(ct_type: str) -> bool:
 
 @orca.step("subregional_ct")
 def subregional_ct():
-    """Normalize the control totals to subregion_id and stamp subregion_id onto the agent tables."""
-    for type_injectable, table_name in CT_TYPE_TABLES.items():
+    """Normalize the control totals to the subregion column and stamp it onto the agent tables."""
+    cfg = _config()
+    subregion = cfg["subregion"]
+    subregion_col, source_col = subregion["column"], subregion["source_column"]
+
+    for spec in cfg["transitions"].values():
+        type_injectable = spec["ct_type"]
+        table_name = spec["controls_table"]
         requested = orca.get_injectable(type_injectable)
         ct_type = "reg_ct"
 
         if table_name in orca.list_tables():
-            ct = orca.get_table(table_name).to_frame().rename(columns={"county_id": "subregion_id"})
+            ct = orca.get_table(table_name).to_frame().rename(columns={source_col: subregion_col})
             orca.add_table(table_name, ct)
             if is_subregional(requested):
-                if "subregion_id" not in ct.columns:
+                if subregion_col not in ct.columns:
                     raise RuntimeError(
-                        f"{type_injectable} is '{requested}' but {table_name} has no county_id column "
+                        f"{type_injectable} is '{requested}' but {table_name} has no {source_col} column "
                         f"to segment on."
                     )
                 ct_type = "sub_ct"
@@ -56,14 +59,14 @@ def subregional_ct():
         orca.add_injectable(type_injectable, ct_type)
         print(f"Registered injectable: {type_injectable}: {ct_type}")
 
-    if not any(is_subregional(orca.get_injectable(name)) for name in CT_TYPE_TABLES):
+    if not any(is_subregional(orca.get_injectable(spec["ct_type"])) for spec in cfg["transitions"].values()):
         return
 
-    for table_name in SUBREGION_TABLES:
+    for table_name in subregion["tables"]:
         table = orca.get_table(table_name)
-        # write subregion_id back as a local column so transitions carry it on cloned agents
+        # write the subregion back as a local column so transitions carry it on cloned agents
         df = table.local.copy()
-        df["subregion_id"] = table.to_frame(["county_id"])["county_id"]
+        df[subregion_col] = table.to_frame([source_col])[source_col]
         orca.add_table(table_name, df)
 
 
@@ -98,12 +101,12 @@ def _apply_linked_tables(linked_tables, added, copied, removed):
         print(f"{table_name} now has {len(updated_linked):,} rows.")
 
 
-def _flag_new_agents(df, added, location_fname, set_year_built, current_year):
+def _flag_new_agents(df, added, location_fname, year_built_column, current_year):
     if len(added) == 0:
         return df
     df.loc[added, location_fname] = UNPLACED
-    if set_year_built:
-        df.loc[added, "year_built"] = current_year
+    if year_built_column:
+        df.loc[added, year_built_column] = current_year
     return df
 
 
@@ -128,7 +131,7 @@ def prepare_control_totals(agent_controls, totals_column, ct_type):
 
 
 def control_total_transition(agents, agent_controls, totals_column, ct_type, current_year,
-                             location_fname, linked_tables=None, set_year_built=False):
+                             location_fname, linked_tables=None, year_built_column=None):
     """Add or remove agents so each control total segment matches its target for `current_year`."""
     linked_tables = linked_tables or {}
     ct = prepare_control_totals(agent_controls, totals_column, ct_type)
@@ -140,7 +143,7 @@ def control_total_transition(agents, agent_controls, totals_column, ct_type, cur
         )
 
     agent_df = agents.to_frame(agents.local_columns)
-    # segmentation columns such as county_id are computed columns, not part of the agent table itself
+    # segmentation columns such as subregion_id are computed columns, not part of the agent table itself
     for col in ct.columns.drop("total"):
         if col not in agent_df.columns:
             agent_df[col] = agents[col]
@@ -150,14 +153,14 @@ def control_total_transition(agents, agent_controls, totals_column, ct_type, cur
     tran = transition.TabularTotalsTransition(ct, "total")
     updated, added, copied, removed = tran.transition(agent_df, current_year)
 
-    updated = _flag_new_agents(updated, added, location_fname, set_year_built, current_year)
+    updated = _flag_new_agents(updated, added, location_fname, year_built_column, current_year)
     _apply_linked_tables(linked_tables, added, copied, removed)
 
     print(f"{agents.name} has {len(updated):,} rows after the transition.")
     orca.add_table(agents.name, updated[agents.local_columns])
 
 
-def growth_rate_transition(tbl, rate, current_year, location_fname, linked_tables=None, set_year_built=False):
+def growth_rate_transition(tbl, rate, current_year, location_fname, linked_tables=None, year_built_column=None):
     """Grow a table by a flat annual rate when no control totals are available."""
     linked_tables = linked_tables or {}
     df_base = tbl.to_frame(tbl.local_columns)
@@ -165,7 +168,7 @@ def growth_rate_transition(tbl, rate, current_year, location_fname, linked_table
 
     df, added, copied, removed = GrowthRateTransition(rate).transition(df_base, None)
 
-    df = _flag_new_agents(df, added, location_fname, set_year_built, current_year)
+    df = _flag_new_agents(df, added, location_fname, year_built_column, current_year)
     _apply_linked_tables(linked_tables, added, copied, removed)
 
     print(f"{tbl.name} has {len(df):,} rows after the transition.")
@@ -173,21 +176,21 @@ def growth_rate_transition(tbl, rate, current_year, location_fname, linked_table
 
 
 def _run_transition(agents, agents_name, rate_injectable, controls_table, totals_column, ct_type,
-                    current_year, linked_tables=None, set_year_built=False):
+                    current_year, linked_tables=None, year_built_column=None):
     """Dispatch to the growth rate transition when a rate is configured, otherwise to the control totals."""
     location_fname = orca.get_injectable("geography_id")
 
-    if rate_injectable in orca.list_injectables():
+    if rate_injectable and rate_injectable in orca.list_injectables():
         rate = orca.get_injectable(rate_injectable)
         print(f"Transitioning {agents_name} by the configured growth rate of {rate * 100:.2f}%.")
         growth_rate_transition(agents, rate, current_year, location_fname,
-                               linked_tables=linked_tables, set_year_built=set_year_built)
+                               linked_tables=linked_tables, year_built_column=year_built_column)
         return
 
     if controls_table in orca.list_tables():
         control_total_transition(agents, orca.get_table(controls_table), totals_column, ct_type,
                                  current_year, location_fname, linked_tables=linked_tables,
-                                 set_year_built=set_year_built)
+                                 year_built_column=year_built_column)
         return
 
     raise RuntimeError(
@@ -196,74 +199,90 @@ def _run_transition(agents, agents_name, rate_injectable, controls_table, totals
     )
 
 
-@orca.step("household_control_totals")
-def household_control_totals(households, persons, year, hh_ct_type):
-    """Match the household count to the annual household control totals, cloning persons along with households."""
+def _run_configured_transition(step_name, current_year):
+    """Look the step's tables and columns up in control_totals.yaml, then run its transition."""
+    cfg = _config()
+    spec = cfg["transitions"][step_name]
+    agents_name = spec["agents"]
+    linked_tables = {
+        name: (orca.get_table(name), key)
+        for name, key in (spec.get("linked_tables") or {}).items()
+    }
+
     _run_transition(
-        households,
-        "households",
-        "household_growth_rate",
-        "annual_household_control_totals",
-        "total_number_of_households",
-        hh_ct_type,
-        year,
-        linked_tables={"persons": (persons, "household_id")},
+        orca.get_table(agents_name),
+        agents_name,
+        spec.get("growth_rate"),
+        spec["controls_table"],
+        spec["totals_column"],
+        orca.get_injectable(spec["ct_type"]),
+        current_year,
+        linked_tables=linked_tables,
+        year_built_column=cfg["year_built_column"] if spec.get("set_year_built") else None,
     )
+
+
+@orca.step("household_control_totals")
+def household_control_totals(year):
+    """Match the household count to the annual household control totals, cloning persons along with households."""
+    _run_configured_transition("household_control_totals", year)
 
 
 @orca.step("job_control_totals")
-def job_control_totals(jobs, year, job_ct_type):
+def job_control_totals(year):
     """Match the job count to the annual job control totals."""
-    _run_transition(
-        jobs,
-        "jobs",
-        "job_growth_rate",
-        "annual_job_control_totals",
-        "total_number_of_jobs",
-        job_ct_type,
-        year,
-    )
+    _run_configured_transition("job_control_totals", year)
 
 
 def current_vacancy(agent_table, space_table):
     return 1 - (len(orca.get_table(agent_table)) / len(orca.get_table(space_table)))
 
 
-def _target_vacancy_rate():
-    if "housing_vacancy_rate" in orca.list_injectables():
-        return orca.get_injectable("housing_vacancy_rate")
-    # without a configured target, hold vacancy where it is so no units get built
-    return current_vacancy("households", "housing_units")
+def _target_vacancy_rate(agent_table, space_table, rate_injectable):
+    if rate_injectable in orca.list_injectables():
+        return orca.get_injectable(rate_injectable)
+    # without a configured target, hold vacancy where it is so no spaces get built
+    return current_vacancy(agent_table, space_table)
 
 
 @orca.step("housing_unit_control_totals")
-def housing_unit_control_totals(households, housing_units, year, hh_ct_type):
-    """Build enough new housing units to hit the target vacancy rate given the current household count."""
-    location_fname = orca.get_injectable("geography_id")
-    vacancy_rate = _target_vacancy_rate()
+def housing_unit_control_totals(year):
+    """Build enough new spaces to hit the target vacancy rate given the current agent count."""
+    cfg = _config()
+    spec = cfg["vacancy_transitions"]["housing_unit_control_totals"]
+    subregion_col = cfg["subregion"]["column"]
+    year_built_column = cfg["year_built_column"]
 
-    if not is_subregional(hh_ct_type):
+    agents = orca.get_table(spec["agents"])
+    spaces = orca.get_table(spec["spaces"])
+    ct_type = orca.get_injectable(spec["ct_type"])
+
+    location_fname = orca.get_injectable("geography_id")
+    vacancy_rate = _target_vacancy_rate(spec["agents"], spec["spaces"], spec["vacancy_rate"])
+
+    if not is_subregional(ct_type):
         target_new_spaces = developer.Developer.compute_units_to_build(
-            len(households), len(housing_units), vacancy_rate)
+            len(agents), len(spaces), vacancy_rate)
         if target_new_spaces <= 0:
-            print("Current housing vacancy already meets the target, no units built.")
+            print(f"Current {spec['spaces']} vacancy already meets the target, none built.")
             return
-        growth_rate = target_new_spaces / len(housing_units)
-        print(f"Growing housing units by {growth_rate * 100:.2f}%.")
-        growth_rate_transition(housing_units, growth_rate, year, location_fname, set_year_built=True)
+        growth_rate = target_new_spaces / len(spaces)
+        print(f"Growing {spec['spaces']} by {growth_rate * 100:.2f}%.")
+        growth_rate_transition(spaces, growth_rate, year, location_fname,
+                               year_built_column=year_built_column)
         return
 
-    household_subregions = households["subregion_id"]
-    unit_subregions = housing_units["subregion_id"]
+    agent_subregions = agents[subregion_col]
+    space_subregions = spaces[subregion_col]
     targets = []
-    for subregion in unit_subregions.unique():
-        number_agents = (household_subregions == subregion).sum()
-        number_agent_spaces = (unit_subregions == subregion).sum()
+    for subregion in space_subregions.unique():
+        number_agents = (agent_subregions == subregion).sum()
+        number_agent_spaces = (space_subregions == subregion).sum()
         subregion_rate = vacancy_rate[subregion] if isinstance(vacancy_rate, dict) else vacancy_rate
         target_new_spaces = developer.Developer.compute_units_to_build(
             number_agents, number_agent_spaces, subregion_rate)
-        targets.append({"year": year, "subregion_id": subregion,
+        targets.append({"year": year, subregion_col: subregion,
                         "total": number_agent_spaces + target_new_spaces})
 
-    control_total_transition(housing_units, pd.DataFrame(targets), "total", hh_ct_type, year,
-                             location_fname, set_year_built=True)
+    control_total_transition(spaces, pd.DataFrame(targets), "total", ct_type, year,
+                             location_fname, year_built_column=year_built_column)

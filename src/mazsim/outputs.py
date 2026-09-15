@@ -68,8 +68,8 @@ def save_full_tables():
     output_tables = orca.get_injectable('output_tables')
     project_dir = orca.get_injectable('project_dir')
     run_number = orca.get_injectable('run_number')
-    export_h5 = Path.joinpath(project_dir, "output", f"results_{run_number}.h5")
-    output_path = Path.joinpath(project_dir, "output")
+    output_path = Path.joinpath(project_dir, orca.get_injectable('output_dir'))
+    export_h5 = Path.joinpath(output_path, f"results_{run_number}.h5")
     Path(output_path).mkdir(parents=True, exist_ok=True)
     print(f"Saving results tables to {export_h5}")
     for table_name in output_tables:

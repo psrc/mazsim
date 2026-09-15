@@ -1,3 +1,30 @@
+# Metadata for each group in the submodel lists below, read by setup_lcms.
+# ct_type names the settings.yaml injectable that decides whether the group is
+# segmented by subregion; each group registers a "<group>_step_names" injectable.
+submodel_groups:
+  hlcm:
+    ct_type: hh_ct_type
+  hulcm:
+    ct_type: hh_ct_type
+  jlcm:
+    ct_type: job_ct_type
+    # unsegmented step names, used by the calibration steps
+    unsegmented_injectable: reg_jlcm_step_names
+
+# Table and column holding the subregion each agent belongs to.
+subregion_source:
+  table: blocks
+  column: subregion_id
+
+# Hedonic price models run by the rent/value price model steps.
+price_models:
+  rent_price_model: hupm_rent
+  value_price_model: hupm_value
+  # predictions are linear and can go negative, so they are clipped at zero
+  clip:
+    table: blocks
+    columns: [res_rent, res_value]
+
 # lcm sub-model yaml files registered by setup_lcms
 submodel_list:
   hulcm:

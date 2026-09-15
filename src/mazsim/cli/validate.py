@@ -63,7 +63,7 @@ def create_validation_summaries():
     if not obs_year_match:
         return
 
-    output_dir = Path.joinpath(project_dir, 'output', 'validation_summaries')
+    output_dir = Path.joinpath(project_dir, orca.get_injectable('output_dir'), 'validation_summaries')
     output_dir.mkdir(parents=True, exist_ok=True)
 
     base_year = orca.get_injectable('base_year')
@@ -105,9 +105,10 @@ def run(args):
 
     # setup run iteration length using years from the observed data
     base_year = orca.get_injectable("base_year")
-    obs_hh_year = orca.get_injectable("observed_households_year")
-    obs_jobs_year = orca.get_injectable("observed_jobs_year")
-    validation_year = max(obs_hh_year, obs_jobs_year)
+    validation_year = max(
+        orca.get_injectable(f"observed_{variable}_year")
+        for variable in validate_yaml["variables"]
+    )
     iter_vars = range(base_year + 1, validation_year + 1)
     
     # set the random seed for reproducibility

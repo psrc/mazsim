@@ -1,0 +1,20 @@
+# Configuration for the observed-data handling in the "load_data" step.
+# Observed counts are pivoted out of one long table onto the base geography as
+# <column_prefix><type> columns, one per type, using that type's latest year.
+
+table: observed_data
+
+# columns in the table above
+id_column: block_id
+type_column: type
+year_column: year
+value_column: value
+
+# table the observed columns are attached to; must be the base geography in variables.yaml
+target_table: blocks
+
+# each type becomes an "obs_<type>" column and an "observed_<type>_year" injectable
+types:
+  - households
+  - jobs
+  - housing_units

@@ -1,4 +1,4 @@
-"""Validate project CSV tables against data_model.py schemas (via pandera) and register them with orca."""
+"""Validate the project's CSV tables against its data_model.py schemas and register them with orca."""
 
 from pathlib import Path
 import numpy as np
@@ -6,156 +6,157 @@ import orca
 import pandana as pdna  # type: ignore[import-not-found]
 import pandas as pd
 import pandera.pandas as pa
-import yaml
 
-from mazsim.data_model import TABLE_INDEXES, TABLE_MODELS
+from mazsim import config
 
-# Geographic level
-orca.add_injectable('geography_id', 'block_id')
+# observed counts land on the base geography as obs_<type>; variables.yaml aggregates them to sum_obs_<type>
+OBSERVED_PREFIX = "obs_"
 
 
-def _validate(table_name: str, df: pd.DataFrame) -> pd.DataFrame:
+def _validate(table_models, table_name: str, df: pd.DataFrame) -> pd.DataFrame:
     """Validate `df` against `table_name`'s pandera schema, collecting every failure before raising."""
-    model = TABLE_MODELS[table_name]
+    if table_name not in table_models:
+        raise KeyError(f"{table_name}: no schema in the project's data model TABLE_MODELS.")
     try:
-        return model.validate(df, lazy=True)
+        return table_models[table_name].validate(df, lazy=True)
     except pa.errors.SchemaErrors as exc:
         raise ValueError(f"{table_name}: schema validation failed\n{exc.failure_cases}") from exc
 
 
 def register_tables(project_dir: Path) -> None:
-    """Load settings.yaml, validate each table against its data_model.py schema, and register it with orca."""
-    configs_dir = project_dir / "configs"
+    """Load every table in data_sources.yaml, validate it against the project's data model, and register it."""
     data_dir = project_dir / orca.get_injectable('data_dir')
+    data_model = config.load_data_model(project_dir)
 
-    settings = yaml.safe_load((configs_dir / "data_sources.yaml").read_text())
+    settings = config.load_yaml("data_sources.yaml", project_dir)
 
     for entry in settings["data_sources"]:
         ((table_name, filename),) = entry.items()
 
         df = pd.read_csv(data_dir / filename)
-        df = _validate(table_name, df)
+        df = _validate(data_model.TABLE_MODELS, table_name, df)
 
-        index_col = TABLE_INDEXES.get(table_name)
+        index_col = data_model.TABLE_INDEXES.get(table_name)
         if index_col:
             df = df.set_index(index_col)
 
         orca.add_table(table_name, df)
 
 
-def register_aggregation_table(table_name, table_id):
+def register_aggregation_table(table_name, table_id, base_table):
     """
     Generator function for tables representing aggregate geography.
     """
     @orca.table(table_name, cache=True)
-    def func(blocks):
-        geog_ids = blocks[table_id].value_counts().index.values
+    def func():
+        geog_ids = orca.get_table(base_table)[table_id].value_counts().index.values
         df = pd.DataFrame(index=geog_ids)
         df.index.name = table_id
         return df
     return func
 
-def register_config_injectable_from_yaml(yaml_file, config_dir):
+def register_config_injectable_from_yaml(yaml_file, project_dir):
     """
     Generator function for YAML-based config injectables.
     """
-    with open(Path.joinpath(config_dir, yaml_file)) as f:
-        file = yaml.safe_load(f)
-    for setting in file:
-        orca.add_injectable(setting, file[setting])
-        print(f'Registered injectable: {setting}: {file[setting]}')
+    for setting, value in config.load_yaml(yaml_file, project_dir).items():
+        orca.add_injectable(setting, value)
+        print(f'Registered injectable: {setting}: {value}')
 
 
-def _register_observed_years():
-    """Register the latest observed year for each observed_data type as an injectable."""
-    df = orca.get_table('observed_data').local
-    latest_years = df.groupby('type')['year'].max()
-    obs_years = {}
-    for obs_type, name in (('households', 'observed_households_year'), ('jobs', 'observed_jobs_year'), ('housing_units', 'observed_housing_units_year')):
-        orca.add_injectable(name, latest_years[obs_type].item())
-        obs_years[obs_type] = latest_years[obs_type].item()
-    return obs_years
+def _register_observed_data(project_dir):
+    """Pivot the observed table onto the base geography and register each type's latest year."""
+    cfg = config.load_yaml("observed_data.yaml", project_dir)
+    type_col, year_col = cfg["type_column"], cfg["year_column"]
 
+    df = orca.get_table(cfg["table"]).local
+    latest_years = df.groupby(type_col)[year_col].max()
 
-def _add_observed_data_to_blocks(obs_years):
-    df = orca.get_table('observed_data').local
-    for type in df['type'].unique():
-        year = obs_years[type]
-        col_name = f'obs_{type}'
-        table = (
-            df.loc[(df['type'] == type) & (df['year'] == year)]
-            .rename(columns={'value':col_name})
-            .drop(columns=['type','year'])
-            .set_index('block_id')
+    for obs_type in cfg["types"]:
+        if obs_type not in latest_years:
+            raise ValueError(f"{cfg['table']} has no rows of type {obs_type!r}.")
+        year = latest_years[obs_type].item()
+        orca.add_injectable(f"observed_{obs_type}_year", year)
+
+        col_name = f"{OBSERVED_PREFIX}{obs_type}"
+        observed = (
+            df.loc[(df[type_col] == obs_type) & (df[year_col] == year)]
+            .set_index(cfg["id_column"])[cfg["value_column"]]
+            .rename(col_name)
         )
-        orca.add_column('blocks',col_name,table[col_name])
+        orca.add_column(cfg["target_table"], col_name, observed)
 
 
 @orca.step('load_settings')
 def load_settings(project_dir):
     # register injectables from YAML configs
-    for yaml_file in ["settings.yaml","submodel_list.yaml"]:
-        register_config_injectable_from_yaml(yaml_file, Path.joinpath(project_dir, "configs"))
+    for yaml_file in ["settings.yaml", "submodel_list.yaml"]:
+        register_config_injectable_from_yaml(yaml_file, project_dir)
 
 
 @orca.step("load_data")
 def load_data(project_dir):
     """Load and register all project tables with orca."""
     register_tables(project_dir)
-    # Aggregate-geography tables
-    aggregate_geos = [('tracts', 'tract_id'),
-                    ('block_groups', 'block_group_id'),
-                    ('counties', 'county_id'),
-                    ('zones', 'zone_id')]
-    for geog in aggregate_geos:
-        register_aggregation_table(geog[0], geog[1])
 
-    obs_years = _register_observed_years()
-    _add_observed_data_to_blocks(obs_years)
+    variables = config.load_yaml("variables.yaml", project_dir)
+    base_table = variables["base_geography"]["table"]
+    for geography_name, geography_id in variables["geographic_levels"]:
+        if geography_name == base_table:
+            continue
+        register_aggregation_table(geography_name, geography_id, base_table)
+
+    _register_observed_data(project_dir)
 
 @orca.step()
-def build_networks(blocks, nodes, edges, project_dir):
-    network_config = yaml.safe_load((project_dir / "configs" / "networks.yaml").read_text())
+def build_networks(project_dir):
+    cfg = config.load_yaml("networks.yaml", project_dir)
 
     try:
-        pdna.network.reserve_num_graphs(network_config["reserve_num_graphs"])
+        pdna.network.reserve_num_graphs(cfg["reserve_num_graphs"])
     except Exception:
         pass
 
-    nodes, edges = nodes.local, edges.local
+    x_col, y_col, node_id_col = cfg["x_column"], cfg["y_column"], cfg["node_id_column"]
+    from_col, to_col = cfg["from_column"], cfg["to_column"]
+
+    nodes = orca.get_table(cfg["nodes_table"]).local
+    edges = orca.get_table(cfg["edges_table"]).local
     print('Number of nodes is %s.' % len(nodes))
     print('Number of edges is %s.' % len(edges))
-    net = pdna.Network(nodes["x"], nodes["y"], edges["from"], edges["to"],
-                        edges[["weight"]], twoway=False)
+    net = pdna.Network(nodes[x_col], nodes[y_col], edges[from_col], edges[to_col],
+                        edges[[cfg["weight_column"]]], twoway=False)
 
-    precompute_distance = network_config["precompute_distance"]
+    precompute_distance = cfg["precompute_distance"]
     print('Precomputing network for distance %s.' % precompute_distance)
     print('Network precompute starting.')
     net.precompute(precompute_distance)
     print('Network precompute done.')
 
-    b = blocks.local
-    b['node_id'] = net.get_node_ids(b['x'], b['y'])
+    b = orca.get_table(cfg["onto_table"]).local
+    b[node_id_col] = net.get_node_ids(b[x_col], b[y_col])
     orca.add_injectable("net", net)
-    get_node_ids(net, "transit_stops")
+    for poi_table in cfg.get("poi_tables", []):
+        get_node_ids(net, poi_table, x_col, y_col, node_id_col)
 
-    # Adding edge type variables
-    if 'edge_type' in edges.columns:
-        for edge_type in edges.edge_type.unique():
-            to_nodes = edges[edges.edge_type == edge_type]['to'].values
-            from_nodes = edges[edges.edge_type == edge_type]['from'].values
-            relevant_nodes = np.unique(np.concatenate([to_nodes, from_nodes]))
-            b['%s_node' % edge_type] = b.node_id.isin(relevant_nodes).astype('int').astype('float')
-        try:
-            major_edge_types = network_config["major_edge_types"]
-            major_no_highway_types = network_config["major_no_highway_edge_types"]
-            b['motorways_node'] = (b[['motorway_node', 'motorway_link_node']].sum(axis=1) > 0).astype(int).astype('float')
-            b['major_road_node'] = (b[major_edge_types].sum(axis=1) > 0).astype(int).astype('float')
-            b['major_no_highway_node'] = (b[major_no_highway_types].sum(axis=1) > 0).astype(int).astype('float')
-        except KeyError:
-            print('Edge type not available')
+    edge_type_col = cfg.get("edge_type_column")
+    if not edge_type_col or edge_type_col not in edges.columns:
+        return
 
-def get_node_ids(net, table):
-    table_df = orca.get_table(table).to_frame(['x', 'y'])
-    table_df['node_id'] = net.get_node_ids(table_df['x'], table_df['y'])
-    orca.add_column(table, 'node_id', table_df['node_id'], cache = True, cache_scope = 'forever')
+    for edge_type in edges[edge_type_col].unique():
+        to_nodes = edges[edges[edge_type_col] == edge_type][to_col].values
+        from_nodes = edges[edges[edge_type_col] == edge_type][from_col].values
+        relevant_nodes = np.unique(np.concatenate([to_nodes, from_nodes]))
+        b['%s_node' % edge_type] = b[node_id_col].isin(relevant_nodes).astype('int').astype('float')
+
+    for flag_name, edge_type_flags in cfg.get("node_flags", {}).items():
+        present = [flag for flag in edge_type_flags if flag in b.columns]
+        if not present:
+            print(f'Skipping {flag_name}: none of its edge types are present.')
+            continue
+        b[flag_name] = (b[present].sum(axis=1) > 0).astype(int).astype('float')
+
+def get_node_ids(net, table, x_col, y_col, node_id_col):
+    table_df = orca.get_table(table).to_frame([x_col, y_col])
+    table_df[node_id_col] = net.get_node_ids(table_df[x_col], table_df[y_col])
+    orca.add_column(table, node_id_col, table_df[node_id_col], cache = True, cache_scope = 'forever')

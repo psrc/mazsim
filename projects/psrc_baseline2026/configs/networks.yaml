@@ -1,7 +1,29 @@
-# Configuration for the "build_networks" step in data.py.
+# Configuration for the "build_networks" step in data_loader.py.
 
 precompute_distance: 3000
 reserve_num_graphs: 2
-major_edge_types: [motorway_node, motorway_link_node, trunk_node, trunk_link_node,
+
+# tables the network is built from and attached to
+nodes_table: nodes
+edges_table: edges
+onto_table: blocks
+
+# column names in the tables above
+x_column: x
+y_column: y
+node_id_column: node_id
+from_column: from
+to_column: to
+weight_column: weight
+edge_type_column: edge_type
+
+# extra point tables that also get a node_id column
+poi_tables: [transit_stops]
+
+# <name> flags on onto_table, each true when the row's nearest node touches any edge
+# of the listed types. Every edge type also gets its own <edge_type>_node flag.
+node_flags:
+  motorways_node: [motorway_node, motorway_link_node]
+  major_road_node: [motorway_node, motorway_link_node, trunk_node, trunk_link_node,
                     primary_node, primary_link_node]
-major_no_highway_edge_types: [trunk_node, trunk_link_node, primary_node, primary_link_node]
+  major_no_highway_node: [trunk_node, trunk_link_node, primary_node, primary_link_node]

@@ -6,9 +6,10 @@ from typing import Any
 import numpy as np
 import orca
 import pandas as pd
-import yaml
 from urbansim.utils import misc
 from variable_generators import generators
+
+from mazsim.config import load_yaml
 
 
 DERIVED_VARIABLE_GENERATORS = {
@@ -24,8 +25,7 @@ DERIVED_VARIABLE_GENERATORS = {
 
 
 def _load_config(project_dir: Path) -> dict[str, Any]:
-    config_path = project_dir / "configs" / "variables.yaml"
-    return yaml.safe_load(config_path.read_text())
+    return load_yaml("variables.yaml", project_dir)
 
 
 def register_geography_ids(config: dict[str, Any]) -> None:
