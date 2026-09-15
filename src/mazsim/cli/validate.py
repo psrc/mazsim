@@ -81,7 +81,17 @@ def create_validation_summaries():
             df[obs_change_col] = df[obs_col] - df[base_col]
         df.to_csv(Path.joinpath(output_dir, f'{table}_{year}.csv'))
         for variable, sim_change_col, obs_change_col in zip(obs_year_match, sim_change_cols, obs_change_cols):
-            save_scatter_html(df, table, variable, sim_change_col, obs_change_col, year, output_dir, base_year)
+            save_scatter_html(
+                df,
+                table,
+                variable,
+                sim_change_col,
+                obs_change_col,
+                year,
+                output_dir,
+                base_year,
+                clip_percentile=orca.get_injectable('validation_clip_percentile'),
+            )
 
 
 
@@ -96,7 +106,7 @@ def run(args):
     validate_yaml = _load_validate_yaml(project_dir)
     orca.add_injectable('validation_geographies',validate_yaml['geographies'])
     orca.add_injectable('validation_variables',validate_yaml['variables'])
-
+    orca.add_injectable('validation_clip_percentile', validate_yaml.get('clip_percentile', 99))
 
     # run preprocessing steps
     additional_preprocessing_steps = validate_yaml.get('additional_preprocessing_steps',[])

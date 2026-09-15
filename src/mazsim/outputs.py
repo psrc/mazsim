@@ -110,10 +110,13 @@ def archive_validation_summaries():
     Path(archive_dir).mkdir(parents=True, exist_ok=True)
     archive_file = archive_dir / f"validation_{run_number}.zip"
     validation_files = sorted((output_dir / 'validation_summaries').glob('*.csv'))
+    validation_html_files = sorted((output_dir / 'validation_summaries').glob('*.html'))
     sys.stdout.flush()
     with zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for validation_file in validation_files:
             zipf.write(validation_file, validation_file.name)
+        for validation_html_file in validation_html_files:
+            zipf.write(validation_html_file, validation_html_file.name)
     print(f"Archived validation summaries to {archive_file}")
 
 @orca.step('delete_non_archived_run_files')
@@ -133,14 +136,13 @@ def delete_non_archived_run_files():
             continue
         path.unlink()
 
-    # delete run summaries
+    # delete run previous run summaries
     if summaries_dir.is_dir():
         for path in summaries_dir.iterdir():
             if path.is_file():
                 path.unlink()
 
-    # delete validation simmaries
-        # delete run summaries
+    # delete previous validation summaries
     if validation_dir.is_dir():
         for path in validation_dir.iterdir():
             if path.is_file():
