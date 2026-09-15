@@ -2,9 +2,6 @@
 # in the output_summary step.
 
 geography: 
-  - blocks
-  - tracts
-  - zones
   - counties
 
 variables:

@@ -13,6 +13,7 @@ from urbansim.models import RegressionModel, SegmentedRegressionModel, \
     GrowthRateTransition, transition, relocation
 
 
+@orca.step('initialize_submodels')
 def initialize_submodels(project_dir):
     """Point modelmanager at the project's submodels directory, where every saved step yaml lives."""
     submodels_dir = Path(project_dir) / 'configs' / 'submodels'

@@ -26,7 +26,7 @@ def _validate(table_name: str, df: pd.DataFrame) -> pd.DataFrame:
 def register_tables(project_dir: Path) -> None:
     """Load settings.yaml, validate each table against its data_model.py schema, and register it with orca."""
     configs_dir = project_dir / "configs"
-    data_dir = project_dir / "data"
+    data_dir = project_dir / orca.get_injectable('data_dir')
 
     settings = yaml.safe_load((configs_dir / "data_sources.yaml").read_text())
 
@@ -70,8 +70,32 @@ def _register_observed_years():
     """Register the latest observed year for each observed_data type as an injectable."""
     df = orca.get_table('observed_data').local
     latest_years = df.groupby('type')['year'].max()
-    for obs_type, name in (('households', 'observed_hh_year'), ('jobs', 'observed_jobs_year')):
+    obs_years = {}
+    for obs_type, name in (('households', 'observed_households_year'), ('jobs', 'observed_jobs_year'), ('housing_units', 'observed_housing_units_year')):
         orca.add_injectable(name, latest_years[obs_type].item())
+        obs_years[obs_type] = latest_years[obs_type].item()
+    return obs_years
+
+
+def _add_observed_data_to_blocks(obs_years):
+    df = orca.get_table('observed_data').local
+    for type in df['type'].unique():
+        year = obs_years[type]
+        col_name = f'obs_{type}'
+        table = (
+            df.loc[(df['type'] == type) & (df['year'] == year)]
+            .rename(columns={'value':col_name})
+            .drop(columns=['type','year'])
+            .set_index('block_id')
+        )
+        orca.add_column('blocks',col_name,table[col_name])
+
+
+@orca.step('load_settings')
+def load_settings(project_dir):
+    # register injectables from YAML configs
+    for yaml_file in ["settings.yaml","submodel_list.yaml"]:
+        register_config_injectable_from_yaml(yaml_file, Path.joinpath(project_dir, "configs"))
 
 
 @orca.step("load_data")
@@ -86,11 +110,8 @@ def load_data(project_dir):
     for geog in aggregate_geos:
         register_aggregation_table(geog[0], geog[1])
 
-    # register injectables from YAML configs
-    for yaml_file in ["settings.yaml","submodel_list.yaml"]:
-        register_config_injectable_from_yaml(yaml_file, Path.joinpath(project_dir, "configs"))
-
-    _register_observed_years()
+    obs_years = _register_observed_years()
+    _add_observed_data_to_blocks(obs_years)
 
 @orca.step()
 def build_networks(blocks, nodes, edges, project_dir):

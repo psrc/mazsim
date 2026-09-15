@@ -1,0 +1,19 @@
+# settings for validation runs
+
+# which geographies to run validation summaries for: tracts are what was used for calibration
+geographies: 
+  - tracts
+
+variables:
+  - households
+  - housing_units
+  - jobs
+
+# additional_preprocessing_steps:
+
+
+additional_simulation_steps:
+  - create_validation_summaries
+
+
+# additional_post_processing_steps:

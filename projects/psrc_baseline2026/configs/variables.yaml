@@ -24,9 +24,10 @@ variables_to_aggregate:
                recent_mover]
   jobs: [aggr_sector_id]
   housing_units: [year_built, built_after_2010, unit_type_id]
-  blocks: [x, y, acres, res_rent, res_value]
+  blocks: [x, y, acres, res_rent, res_value, obs_households, obs_jobs, obs_housing_units]
 
-sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housing_unit_capacity, job_capacity, built_after_2010]
+sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housing_unit_capacity,
+           job_capacity, built_after_2010, obs_households, obs_jobs, obs_housing_units]
 
 # Vars used to build prop_<var>_<category> and density_<agent> variables.
 discrete_variables:

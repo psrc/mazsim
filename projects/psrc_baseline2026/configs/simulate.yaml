@@ -1,5 +1,9 @@
 # orca steps to run during simulation:
 preprocessing_steps:
+  - load_settings
+  - start_run_log
+  - delete_non_archived_run_files
+  - initialize_submodels
   - load_data
   - build_networks
   - register_variables
