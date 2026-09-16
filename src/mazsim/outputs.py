@@ -27,10 +27,10 @@ def save_diff_summaries():
     end_year = orca.get_injectable('end_year')
     diff_variables = cfg['diff_variables']
     for geography in cfg['geography']:
-        df_start = pd.read_csv(Path.joinpath(output_dir, f'{geography}_{start_year}.csv'))
-        df_end = pd.read_csv(Path.joinpath(output_dir, f'{geography}_{end_year}.csv'))
+        df_start = pd.read_csv(Path.joinpath(output_dir, f'{geography}_{start_year}.csv'), index_col=0)
+        df_end = pd.read_csv(Path.joinpath(output_dir, f'{geography}_{end_year}.csv'), index_col=0)
         df_diff = df_end[diff_variables] - df_start[diff_variables]
-        df_diff.reset_index().to_csv(Path.joinpath(output_dir, f'{geography}_{start_year}_{end_year}_diff.csv'), index=False)
+        df_diff.reset_index().to_csv(Path.joinpath(output_dir, f'{geography}_{start_year}_{end_year}_diff.csv'), index=False )
 
 
 class _Tee:
@@ -107,6 +107,8 @@ def archive_results():
     run_log = output_dir / f"run_{run_number}.log"
     summary_files = sorted((output_dir / 'output_summaries').glob('*.csv'))
     config_files = sorted(p for p in (project_dir / 'configs').rglob('*') if p.is_file())
+    # empty on simulate runs, which don't produce validation summaries
+    validation_files = sorted(p for p in (output_dir / 'validation_summaries').glob('*') if p.suffix in ('.csv', '.html'))
     sys.stdout.flush()
     with zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for path in (results_h5, run_log):
@@ -114,27 +116,11 @@ def archive_results():
                 zipf.write(path, path.name)
         for summary_file in summary_files:
             zipf.write(summary_file, Path('output_summaries') / summary_file.name)
+        for validation_file in validation_files:
+            zipf.write(validation_file, Path('validation_summaries') / validation_file.name)
         for config_file in config_files:
             zipf.write(config_file, Path('configs') / config_file.relative_to(project_dir / 'configs'))
     print(f"Archived results to {archive_file}")
-
-@orca.step('archive_validation_summaries')
-def archive_validation_summaries():
-    project_dir = orca.get_injectable('project_dir')
-    run_number = orca.get_injectable('run_number')
-    output_dir = Path.joinpath(project_dir, orca.get_injectable('output_dir'))
-    archive_dir = Path.joinpath(output_dir, 'archive')
-    Path(archive_dir).mkdir(parents=True, exist_ok=True)
-    archive_file = archive_dir / f"validation_{run_number}.zip"
-    validation_files = sorted((output_dir / 'validation_summaries').glob('*.csv'))
-    validation_html_files = sorted((output_dir / 'validation_summaries').glob('*.html'))
-    sys.stdout.flush()
-    with zipfile.ZipFile(archive_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for validation_file in validation_files:
-            zipf.write(validation_file, validation_file.name)
-        for validation_html_file in validation_html_files:
-            zipf.write(validation_html_file, validation_html_file.name)
-    print(f"Archived validation summaries to {archive_file}")
 
 @orca.step('delete_non_archived_run_files')
 def delete_non_archived_run_files():

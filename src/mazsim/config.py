@@ -74,3 +74,37 @@ def load_data_model(project_dir: Path | None = None) -> ModuleType:
 
     _data_model_cache[directory] = module
     return module
+
+def register_config_injectable_from_yaml(yaml_file, project_dir):
+    """
+    Generator function for YAML-based config injectables.
+    """
+    for setting, value in load_yaml(yaml_file, project_dir).items():
+        orca.add_injectable(setting, value)
+        print(f'Registered injectable: {setting}: {value}')
+
+def register_custom_steps():
+    try: 
+        cust_files = orca.get_injectable('custom_steps_files')
+        cust_dir = orca.get_injectable('custom_steps_dir')
+        for file in cust_files:
+            # cust_dir is relative to the project root, not the current working directory
+            file_path = get_project_dir() / cust_dir / file
+            if file_path.is_file():
+                spec = importlib.util.spec_from_file_location(f"custom_step_{file}", file_path)
+                if spec is None or spec.loader is None:
+                    continue
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[f"custom_step_{file}"] = module
+                spec.loader.exec_module(module)
+    except: print('Missing "custom_steps" py files not loaded. See settings.yaml for configuration.')
+
+
+@orca.step('load_settings')
+def load_settings(project_dir):
+    # register injectables from YAML configs
+    for yaml_file in ["settings.yaml", "submodel_list.yaml"]:
+        register_config_injectable_from_yaml(yaml_file, project_dir)
+
+    # register custom orca steps located in custom_steps py files defined in settings.yaml
+    register_custom_steps()

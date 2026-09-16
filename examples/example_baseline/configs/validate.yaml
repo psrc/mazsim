@@ -10,7 +10,7 @@ variables:
   - jobs
 
 # scatterplot axes are scaled to this percentile of |change| so extreme observed values
-# (notably jobs) don't flatten the rest of the cloud; off-scale points are pinned to the edge
+# don't flatten the rest of the cloud; off-scale points are pinned to the edge
 clip_percentile: 99
 
 additional_preprocessing_steps:
@@ -24,5 +24,4 @@ additional_simulation_steps:
 skip_simulation_steps:
   - place_observed_data
 
-additional_postprocessing_steps:
-  - archive_validation_summaries
+# additional_postprocessing_steps:

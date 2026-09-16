@@ -7,7 +7,7 @@ import numpy as np
 from pathlib import Path
 import argparse
 
-from mazsim import control_totals, data_loader, submodels, variable_loader
+from mazsim import control_totals, data_loader, submodels, variable_loader, config
 from mazsim.outputs import get_last_run_number, start_run_log
 from mazsim.submodels import initialize_submodels
 

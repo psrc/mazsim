@@ -1,5 +1,6 @@
 """Validate the project's CSV tables against its data_model.py schemas and register them with orca."""
 
+import zipfile
 from pathlib import Path
 import numpy as np
 import orca
@@ -55,14 +56,6 @@ def register_aggregation_table(table_name, table_id, base_table):
         return df
     return func
 
-def register_config_injectable_from_yaml(yaml_file, project_dir):
-    """
-    Generator function for YAML-based config injectables.
-    """
-    for setting, value in config.load_yaml(yaml_file, project_dir).items():
-        orca.add_injectable(setting, value)
-        print(f'Registered injectable: {setting}: {value}')
-
 
 def _register_observed_data(project_dir):
     """Pivot the observed table onto the base geography and register each type's latest year."""
@@ -87,16 +80,41 @@ def _register_observed_data(project_dir):
         orca.add_column(cfg["target_table"], col_name, observed)
 
 
-@orca.step('load_settings')
-def load_settings(project_dir):
-    # register injectables from YAML configs
-    for yaml_file in ["settings.yaml", "submodel_list.yaml"]:
-        register_config_injectable_from_yaml(yaml_file, project_dir)
+def check_for_missing_tables(project_dir):
+    """Return True if any table listed in data_sources.yaml is missing from disk."""
+    cfg = config.load_yaml("data_sources.yaml", project_dir)
+    data_dir_path = Path.joinpath(project_dir, orca.get_injectable('data_dir'))
+    for source in cfg.get("data_sources", []):
+        for _, file_name in source.items():
+            if not (data_dir_path / file_name).exists():
+                return True
+    return False
+
+def unzip_data_archive(project_dir):
+    """Extract the data archive if any tables are missing; leftover gaps are caught by schema validation later."""
+    if not check_for_missing_tables(project_dir):
+        return
+
+    cfg = config.load_yaml("data_sources.yaml", project_dir)
+    data_archive_file = cfg.get("data_archive")
+    if not data_archive_file:
+        return
+
+    data_dir_path = Path.joinpath(project_dir, orca.get_injectable('data_dir'))
+    archive_path = Path.joinpath(data_dir_path, data_archive_file)
+    if not archive_path.exists():
+        return
+
+    print(f"Extracting data archive: {archive_path}")
+    with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+        zip_ref.extractall(data_dir_path)
 
 
 @orca.step("load_data")
-def load_data(project_dir):
+def load_data():
     """Load and register all project tables with orca."""
+    project_dir = orca.get_injectable('project_dir')
+    unzip_data_archive(project_dir)
     register_tables(project_dir)
 
     variables = config.load_yaml("variables.yaml", project_dir)

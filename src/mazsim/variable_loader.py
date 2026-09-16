@@ -1,5 +1,7 @@
 """Register derived orca variables: geography ids, aggregations, ratios, disaggregations, skims, and pandana access."""
 
+import importlib.util
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +60,29 @@ def register_derived_variables(config: dict[str, Any]) -> None:
             spec["mapping"] = config[spec["mapping"]]
 
         DERIVED_VARIABLE_GENERATORS[kind](table, name, **spec)
+
+
+def register_custom_variables(project_dir: Path) -> None:
+    """Import the project's custom variable modules, named by settings.yaml, so their orca columns register."""
+    filenames = orca.get_injectable("custom_variables_files")
+    custom_variables_dir = orca.get_injectable("custom_variables_dir")
+    directory = Path(project_dir) / custom_variables_dir
+
+    for filename in filenames:
+        path = directory / filename
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"settings.yaml lists custom variables file {filename!r}, but {path} does not exist."
+            )
+
+        # module name is namespaced by project so two projects' custom variables can coexist
+        module_name = f"mazsim_custom_variables_{Path(project_dir).name}_{path.stem}"
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Could not load the custom variables module at {path}.")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
 
 
 def fillna_median(series: pd.Series) -> pd.Series:
@@ -350,6 +375,9 @@ def register_variables(project_dir: Path) -> None:
     register_geography_ids(config)
     register_agent_geography_ids(config)
     register_derived_variables(config)
+
+    # Registered before the aggregation pass so custom columns can be aggregated and transformed.
+    register_custom_variables(project_dir)
 
     generated_variables: set[str] = set()
     register_aggregation_variables(config, generated_variables)

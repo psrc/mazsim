@@ -23,6 +23,7 @@ simulation_steps:
   - household_lcms
   - save_full_tables
   - save_output_summaries
+  - custom_step_example
 
 postprocessing_steps:
   - save_diff_summaries

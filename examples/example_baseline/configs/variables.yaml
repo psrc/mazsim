@@ -50,107 +50,13 @@ geog_vars_to_dummify: [county_id]
 # variable_generators; `table`/`name` are positional, every other key is passed through.
 # Registered before the aggregation pass, so these are available to aggregate/disaggregate.
 derived_variables:
-  - table: blocks
-    name: housing_unit_capacity
-    kind: join
-    from_table: block_capacity
-    from_column: housing_unit_capacity
-    fillna: 0
-    dtype: int32
-    cache_scope: forever
-
-  - table: blocks
-    name: job_capacity
-    kind: join
-    from_table: block_capacity
-    from_column: job_capacity
-    fillna: 0
-    dtype: int32
-    cache_scope: forever
-
-  # LCM capacity variables. Uncached so each placement step sees the prior step's agents.
-  - table: blocks
-    name: vacant_housing_units
-    kind: difference
-    subtract_from: total_housing_units
-    subtract:
-      count_of: households
-      key: block_id
-    cache: false
-    cache_scope: step
-
-  - table: blocks
-    name: vacant_hu_spaces
-    kind: difference
-    subtract_from: housing_unit_capacity
-    subtract:
-      count_of: housing_units
-      key: block_id
-    cache: false
-    cache_scope: step
-
-  - table: blocks
-    name: vacant_job_spaces
-    kind: difference
-    subtract_from: job_capacity
-    subtract:
-      count_of: jobs
-      key: block_id
-    cache: false
-    cache_scope: step
-
-  # Stands in for a filter expression where a submodel needs no filter.
+# Stands in for a filter expression where a submodel needs no filter.
   - table: blocks
     name: all_blocks
     kind: constant
     value: 1
     dtype: int32
     cache_scope: forever
-
-  - table: households
-    name: income_quartile
-    kind: quantile
-    source: income
-    bins: 4
-    offset: 1
-
-  - table: jobs
-    name: aggr_sector_id
-    kind: map
-    source: sector_id
-    # `mapping` names a top-level key in this file, or may be given inline.
-    mapping: aggr_sector_map
-
-  - table: housing_units
-    name: built_after_2010
-    kind: threshold
-    source: year_built
-    op: ">="
-    value: 2010
-    dtype: int8
-
-# Maps 2-digit NAICS sector_id to an aggregated sector category for the jobs.aggr_sector_id column.
-aggr_sector_map:
-  11: 1  # Agriculture, Forestry, Fishing and Hunting
-  21: 1  # Mining, Quarrying, and Oil and Gas Extraction
-  22: 1  # Utilities
-  23: 1  # Construction
-  3133: 2  # Manufacturing
-  42: 2  # Wholesale Trade
-  4445: 3  # Retail Trade
-  4849: 2  # Transportation and Warehousing
-  51: 4  # Information
-  52: 4  # Finance and Insurance
-  53: 4  # Real Estate and Rental and Leasing
-  54: 4  # Professional, Scientific, and Technical Services
-  55: 4  # Management of Companies and Enterprises
-  56: 4  # Administrative and Support and Waste Management and Remediation Services
-  61: 5  # Educational Services
-  62: 5  # Health Care and Social Assistance
-  71: 3  # Arts, Entertainment, and Recreation
-  72: 3  # Accommodation and Food Services
-  81: 4  # Other Services (except Public Administration)
-  98: 5  # Government
 
 skims:
   # Table holding the zone-to-zone impedances, and the zone table its ids refer to.

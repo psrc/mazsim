@@ -8,7 +8,7 @@ from typing import Any
 from pathlib import Path
 import argparse
 
-from mazsim import control_totals, data_loader, submodels, variable_loader, outputs
+from mazsim import control_totals, data_loader, submodels, variable_loader, outputs, config
 from mazsim.outputs import get_last_run_number, start_run_log
 from mazsim.submodels import initialize_submodels
 from mazsim.util import save_scatter_html
@@ -115,10 +115,12 @@ def run(args):
 
     # setup run iteration length using years from the observed data
     base_year = orca.get_injectable("base_year")
+    orca.add_injectable('start_year',base_year)
     validation_year = max(
         orca.get_injectable(f"observed_{variable}_year")
         for variable in validate_yaml["variables"]
     )
+    orca.add_injectable('end_year',validation_year)
     iter_vars = range(base_year + 1, validation_year + 1)
     
     # set the random seed for reproducibility

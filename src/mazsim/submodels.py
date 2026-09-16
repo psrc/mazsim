@@ -15,7 +15,7 @@ from urbansim.models import RegressionModel, SegmentedRegressionModel, \
 from urbansim.models.util import columns_in_formula
 
 from mazsim import config
-from mazsim.control_totals import UNPLACED
+from mazsim.control_totals import UNPLACED, refresh_subregion
 from mazsim.data_loader import OBSERVED_PREFIX
 
 
@@ -249,6 +249,8 @@ def _place_type(type_name, spec, year):
     df.loc[placements.index, location_column] = placements.to_numpy()
 
     orca.add_table(table_name, df)
+    # the pool is drawn from regionwide, so rows can land in a different subregion than they left
+    refresh_subregion(table_name)
     print(f'Observed {year} {type_name}: placed {len(placements):,} and unplaced {len(evicted):,} '
           f'across {len(delta[delta != 0]):,} blocks.')
 

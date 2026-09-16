@@ -70,6 +70,30 @@ def subregional_ct():
         orca.add_table(table_name, df)
 
 
+def refresh_subregion(table_name):
+    """Re-read the stamped subregion of placed rows from wherever they now sit.
+
+    subregional_ct freezes the subregion as a local column so transitions can carry it onto
+    unplaced clones, which leaves it stale for any row moved to another subregion since.
+    """
+    cfg = _config()
+    subregion = cfg["subregion"]
+    subregion_col, source_col = subregion["column"], subregion["source_column"]
+
+    if table_name not in subregion["tables"]:
+        return
+
+    table = orca.get_table(table_name)
+    if subregion_col not in table.local_columns:
+        return
+
+    df = table.local.copy()
+    placed = df[orca.get_injectable("geography_id")] != UNPLACED
+    current = table.to_frame([source_col])[source_col]
+    df.loc[placed, subregion_col] = current[placed].astype(df[subregion_col].dtype)
+    orca.add_table(table_name, df)
+
+
 def update_linked_table(tbl, col_name, added, copied, removed):
     """Keep a child table (e.g. persons) in sync after rows were cloned from or dropped out of its parent."""
     table = tbl.local

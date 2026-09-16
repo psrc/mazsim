@@ -34,3 +34,16 @@ output_tables:
   - persons
   - jobs
   - housing_units
+
+# additional orca steps can be defined in .py files placed in the custrom_steps_dir
+# defined here. If multiple .py files are needed they can all be listed in custom_steps_files.
+# by deault they are in a sinlge custom_steps.py file in the configs folder.
+custom_steps_dir: configs
+custom_steps_files: 
+  - custom_steps.py
+
+# additional orca variables defined in .py files placed in the custom_variables_dir and 
+# listed in custom_variables_files
+custom_variables_dir: configs
+custom_variables_files:
+  - custom_variables.py
