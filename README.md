@@ -2,29 +2,36 @@
 
 ## Installation
 1. Install UV package manager
-2. Install Microsoft Visual Studio Community and make sure the C++ MSVC build tools option is selected during install
-3. Setup pandana:
-    - manually clone the jkolberg pandana fork from github.com/jkolberg/pandana and switch to the pandas_23 branch
-    - change the tool.uv.sources path in pyproject.toml to your cloned pandana directory location
-4. Create the uv venv:
+    
+    Windows (use powershell terminal):
+
+    ```powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"```
+
+    OSX/Linux:
+
+    ```curl -LsSf https://astral.sh/uv/install.sh | sh```
+
+2. [Install Microsoft Visual Studio Community](https://learn.microsoft.com/en-us/cpp/overview/acquire-msvc?view=msvc-170) and make sure the C++ MSVC build tools option is selected during install
+
+3. Create the uv venv:
 
     ```uv sync```
 
-5. Run example estimation with the following command: (can be skipped, example already has estimated submodels)
+4. Run example estimation with the following command: (can be skipped, example already has estimated submodels)
     
     ```uv run mazsim estimate -c examples\example_baseline\configs```
 
-6. Run example calibration with the following command: (can be skipped, example already has calibrated submodels)
+5. Run example calibration with the following command: (can be skipped, example already has calibrated submodels)
     
     ```uv run mazsim calibrate -c examples\example_baseline\configs```
 
-7. Run example validation with the following command:
+6. Run example validation with the following command:
 
     ```uv run mazsim validate -c examples\example_baseline\configs```
 
     Validation runs the simulation out the most recent year that's included in the observed_data table. The simulation can then be compared to the observerd data before running the full simulation.
 
-8. Run simulation with the following command:
+7. Run simulation with the following command:
 
     ```uv run mazsim simulate -c examples\example_baseline\configs```
 
