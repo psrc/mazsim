@@ -28,4 +28,4 @@
 
     ```uv run mazsim simulate -c examples\example_baseline\configs```
 
-    Simulation first forces observed jobs and housing_units to be placed and then begins the simulation using the most recent observed data year possible. In the example, the most recent observed jobs data is 2023 and most recent observed housing_unit data is 2025. The simulation starts in 2023 but continues to force the placement of housing_units in 2024 and 2025 while job placement switches to being simulated in 2024.
+    Simulation first forces observed jobs and housing_units to be placed and then begins the simulation using the most recent observed data year possible. In the example, the most recent observed jobs data is 2023 and most recent observed housing_unit data is 2025. The simulation starts in 2023 but continues to force the placement of housing_units in 2024 and 2025 while job placement switches to being simulated in 2024. Households are still placed by the LCMs so they will not perfectly match observed household data if provided.

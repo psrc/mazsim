@@ -1589,7 +1589,7 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.9" },
     { name = "numpy", specifier = ">2" },
     { name = "orca", git = "https://github.com/stefancoe/orca.git" },
-    { name = "pandana", editable = "C:/Users/jkolberg/PythonProjects/forks/pandana" },
+    { name = "pandana", git = "https://github.com/jkolberg/pandana.git?branch=pandas_23" },
     { name = "pandera", specifier = ">=0.33.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "seaborn", specifier = ">=0.13.2" },
@@ -2220,7 +2220,7 @@ wheels = [
 [[package]]
 name = "pandana"
 version = "0.7"
-source = { editable = "C:/Users/jkolberg/PythonProjects/forks/pandana" }
+source = { git = "https://github.com/jkolberg/pandana.git?branch=pandas_23#c450418b05e3c4d50facc2006409078959aded96" }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
@@ -2231,15 +2231,6 @@ dependencies = [
     { name = "scikit-learn", version = "1.9.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "tables", version = "3.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "tables", version = "3.11.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "numpy", specifier = ">=2.0" },
-    { name = "pandas", specifier = ">=2.3,<3.0" },
-    { name = "requests", specifier = ">=2.0" },
-    { name = "scikit-learn", specifier = ">=0.18" },
-    { name = "tables", specifier = ">=3.1" },
 ]
 
 [[package]]

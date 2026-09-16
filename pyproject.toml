@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "jkolberg", email = "jwkolberg@gmail.com" }
+    { name = "jkolberg", email = "jkolberg@psrc.org" }
 ]
 requires-python = ">=3.10"
 dependencies = [
@@ -32,11 +32,9 @@ requires = ["uv_build>=0.9.18,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
-pandana = { path = "C:/Users/jkolberg/PythonProjects/forks/pandana", editable = true }
+pandana = { git = "https://github.com/jkolberg/pandana.git", branch = "pandas_23" }
 
 [tool.uv]
-no-binary-package = ["pandana"]
-
 # This forces any external package needing numpy or pybind11 at compile-time 
 # to use the updated, NumPy 2-compatible versions
 override-dependencies = [
