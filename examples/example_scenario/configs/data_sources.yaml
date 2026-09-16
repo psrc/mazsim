@@ -1,0 +1,9 @@
+# Data sources configuration for the example scenario
+
+# specify the baseline run that this scenario will build upon
+baseline_run: example_baseline/output/archive/results_9.zip
+
+
+# scenario data sources
+data_sources:
+  - block_capacity: block_capacity_transit_scenario.csv

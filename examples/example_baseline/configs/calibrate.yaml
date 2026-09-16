@@ -1,6 +1,7 @@
 # calibration steps and settings
 
 calibration_steps:
+  - load_settings
   - load_data
   - build_networks
   - register_variables

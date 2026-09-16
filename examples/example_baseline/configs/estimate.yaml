@@ -1,4 +1,5 @@
 estimation_steps:
+  - load_settings
   - load_data
   - build_networks
   - register_variables

@@ -1,7 +1,4 @@
-# this is the baseline project that a scenario will inherit settings from 
-# leave empty for baseline projects
-parent_baseline: 
-
+# Data sources configuration for the baseline example project
 
 data_sources:
 # baseline data sources, not required for scenarios
