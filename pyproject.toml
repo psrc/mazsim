@@ -12,13 +12,12 @@ dependencies = [
     "bokeh>=3.9.1",
     "matplotlib>=3.10.9",
     "numpy>2",
-    "orca @ git+https://github.com/stefancoe/orca.git",
+    "orca",
     "pandana",
     "pandera>=0.33.1",
     "pyyaml>=6.0.3",
-    "urbansim @ git+https://github.com/stefancoe/urbansim.git@transition_updates",
-    "urbansim_templates @ git+https://github.com/jkolberg/urbansim_templates.git",
-    "variable_generators @ git+https://github.com/jkolberg/variable_generators.git",
+    "urbansim",
+    "urbansim_templates"
 ]
 
 [project.scripts]
@@ -28,13 +27,3 @@ mazsim = "mazsim.cli.main:main"
 requires = ["uv_build>=0.9.18,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.uv.sources]
-pandana = { git = "https://github.com/jkolberg/pandana.git", branch = "pandas_23" }
-
-[tool.uv]
-# This forces any external package needing numpy or pybind11 at compile-time 
-# to use the updated, NumPy 2-compatible versions
-override-dependencies = [
-    "numpy>=2.0.0",
-    "pybind11>=2.12.0"
-]

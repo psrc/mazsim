@@ -9,7 +9,7 @@ import numpy as np
 import orca
 import pandas as pd
 from urbansim.utils import misc
-from variable_generators import generators
+from mazsim.util import generators
 
 from mazsim.config import load_yaml
 
