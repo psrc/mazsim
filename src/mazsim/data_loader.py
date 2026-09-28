@@ -7,8 +7,9 @@ import orca
 import pandana as pdna  # type: ignore[import-not-found]
 import pandas as pd
 import pandera.pandas as pa
+from urbansim.utils import misc
 
-from mazsim import config
+from mazsim import config, geography
 
 # observed counts land on the base geography as obs_<type>; variables.yaml aggregates them to sum_obs_<type>
 OBSERVED_PREFIX = "obs_"
@@ -61,9 +62,11 @@ def _register_observed_data(project_dir):
     """Pivot the observed table onto the base geography and register each type's latest year."""
     cfg = config.load_yaml("observed_data.yaml", project_dir)
     type_col, year_col = cfg["type_column"], cfg["year_column"]
+    id_col = cfg["id_column"]
 
     df = orca.get_table(cfg["table"]).local
     latest_years = df.groupby(type_col)[year_col].max()
+    target = orca.get_table(cfg["target_table"])
 
     for obs_type in cfg["types"]:
         if obs_type not in latest_years:
@@ -74,9 +77,13 @@ def _register_observed_data(project_dir):
         col_name = f"{OBSERVED_PREFIX}{obs_type}"
         observed = (
             df.loc[(df[type_col] == obs_type) & (df[year_col] == year)]
-            .set_index(cfg["id_column"])[cfg["value_column"]]
+            .set_index(id_col)[cfg["value_column"]]
             .rename(col_name)
         )
+        if id_col in target.columns:
+            # the observed ids key a column on the target table rather than its index, e.g. the
+            # base geography id when the target table is indexed by a finer id of its own
+            observed = misc.reindex(observed, target[id_col])
         orca.add_column(cfg["target_table"], col_name, observed)
 
 
@@ -119,8 +126,10 @@ def load_data():
 
     variables = config.load_yaml("variables.yaml", project_dir)
     base_table = variables["base_geography"]["table"]
-    for geography_name, geography_id in variables["geographic_levels"]:
-        if geography_name == base_table:
+    # tables a project supplies itself (zones, say) are already registered and are left alone
+    registered_tables = set(orca.list_tables())
+    for geography_name, geography_id in geography.geography_level_keys(variables).items():
+        if geography_name == base_table or geography_name in registered_tables:
             continue
         register_aggregation_table(geography_name, geography_id, base_table)
 

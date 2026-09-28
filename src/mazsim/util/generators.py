@@ -405,16 +405,20 @@ def make_constant_var(table, var_name, value, dtype="int32", cache=True, cache_s
     return func
 
 
-def make_index_slice_var(table, var_name, start, stop, dtype="int64", cache=True, cache_scope="forever"):
-    """Generator function for an id carved out of the table's own index. Registers with orca.
+def make_slice_var(table, var_name, start, stop, source=None, dtype="int64", cache=True, cache_scope="forever"):
+    """Generator function for an id carved out of a column of its table. Registers with orca.
 
-    Nesting geographies such as census blocks encode their parent ids as a prefix of the child id.
+    Nesting geographies encode their parent ids as a prefix of the child id, so slicing the
+    child id -- the table's index by default, or `source` when the child id is an ordinary
+    column (a base geography table indexed by its own id keeps the finer id as a column) --
+    yields the parent id.
     """
 
     @orca.column(table, var_name, cache=cache, cache_scope=cache_scope)
     def func():
-        index = orca.get_table(table).index
-        series = pd.Series(index.values, index=index).astype(str).str.slice(start, stop)
+        target = orca.get_table(table)
+        values = target.index if source is None else target[source]
+        series = pd.Series(values, index=target.index).astype(str).str.slice(start, stop)
         return _finalize(series, dtype=dtype)
 
     return func

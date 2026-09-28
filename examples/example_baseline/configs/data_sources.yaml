@@ -2,17 +2,18 @@
 
 data_sources:
 # baseline data sources, not required for scenarios
-  - blocks: blocks_2020_sample.csv
-  - households: synthetic_households.csv
-  - jobs: jobs_2020_sample.csv
-  - housing_units: synthetic_housing_units.csv
-  - persons: synthetic_persons.csv
-  - transit_stops: transit_stops.csv
-  - nodes: nodes.csv
-  - edges: edges.csv
-  - job_calib_targets: job_calib_targets.csv
-  - household_calib_targets: household_calib_targets.csv
-  - housing_unit_calib_targets: housing_unit_calib_targets.csv
+  - blocks: blocks_2020_2026-09-28.csv
+  - households: synthetic_households_2026-09-24.csv
+  - jobs: jobs_2026-09-25.csv
+  - housing_units: synthetic_housing_units_2026-09-24.csv
+  - persons: synthetic_persons_2026-09-24.csv
+  - transit_stops: transit_stops_2026-09-25.csv
+  - urban_centers: urban_centers_2026-09-25.csv
+  - nodes: nodes_2026-09-25.csv
+  - edges: edges_2026-09-25.csv
+#  - job_calib_targets: job_calib_targets.csv
+  - household_calib_targets: household_calib_targets_2026-09-25.csv
+  - housing_unit_calib_targets: housing_unit_calib_targets_2026-09-25.csv
   - travel_data: travel_data.csv
   - observed_data: observed_data_sample.csv
 

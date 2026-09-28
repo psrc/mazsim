@@ -1,20 +1,28 @@
 # Configuration for orca variable registration (the "register_variables" step in variables.py).
 
-# The finest geography; every other geography nests within it and variables land on it.
-base_geography: {table: blocks, id: block_id}
+# The finest geography; its table is indexed by this id, agents are located at it, and the
+# location choice models write it as their choice. Other finer ids (block_id) stay on that
+# table as ordinary columns.
+base_geography: {table: blocks, id: maz_id}
 
-# Parent geography ids carved out of the base geography's index, which is a 15-digit census block id.
+# Parent geography ids carved out of a finer id's prefix. `source` is the column to slice
+# (the table's index when omitted); the base geography's table is indexed by its own id, so
+# these slice block_id.
 geography_ids:
-  - {name: county_id, slice: [0, 6]}
-  - {name: tract_id, slice: [0, 12]}
-  - {name: block_group_id, slice: [0, 13]}
+  - {name: county_id, source: block_id, slice: [0, 6]}
+  - {name: tract_id, source: block_id, slice: [0, 12]}
+  - {name: block_group_id, source: block_id, slice: [0, 13]}
 
+# [level name, id column] for every level modeled above the base geography. Each declared id
+# column has to be carried on the base geography's table: a raw column like zone_id, or one
+# carved out by geography_ids above. The level holding the base geography's own rows ("blocks")
+# always resolves to the base id, whatever id it declares.
 geographic_levels:
   - [block_groups, block_group_id]
   - [tracts, tract_id]
   - [counties, county_id]
-  - [blocks, block_id]
   - [zones, zone_id]
+  - [blocks, maz_id]
 
 aggregation_functions: [mean, median, std, sum]
 
@@ -87,11 +95,16 @@ pandana:
                           prop_aggr_sector_id_2, prop_aggr_sector_id_3,
                           prop_aggr_sector_id_4, prop_aggr_sector_id_5,
                           prop_children_0]
-  # Summarized from a separate points-of-interest table, one variable per entry.
+  # Summarized from a separate points-of-interest table, one variable per entry. An entry
+  # without a `variable` counts the POIs reachable within the distance.
   poi_variables:
     - name_template: 'transit_stop_sum_{distance}_{decay}'
       pois_table: transit_stops
-      variable: hct
+      agg_type: sum
+      log: false
+      dummy_prefix: is_
+    - name_template: 'urban_center_sum_{distance}_{decay}'
+      pois_table: urban_centers
       agg_type: sum
       log: false
       dummy_prefix: is_

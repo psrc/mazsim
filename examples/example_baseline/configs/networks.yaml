@@ -18,7 +18,7 @@ weight_column: weight
 edge_type_column: edge_type
 
 # extra point tables that also get a node_id column
-poi_tables: [transit_stops]
+poi_tables: [transit_stops, urban_centers]
 
 # <name> flags on onto_table, each true when the row's nearest node touches any edge
 # of the listed types. Every edge type also gets its own <edge_type>_node flag.

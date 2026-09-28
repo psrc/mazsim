@@ -11,6 +11,7 @@ import pandas as pd
 from urbansim.utils import misc
 from mazsim.util import generators
 
+from mazsim import geography
 from mazsim.config import load_yaml
 
 
@@ -31,13 +32,18 @@ def _load_config(project_dir: Path) -> dict[str, Any]:
 
 
 def register_geography_ids(config: dict[str, Any]) -> None:
-    """Register the parent geography id columns carved out of the base geography's index."""
-    table = config["base_geography"]["table"]
+    """Register the parent geography id columns carved out of a finer id on the base geography's table."""
+    base_table, _ = geography.base_geography(config)
 
     for spec in config["geography_ids"]:
         start, stop = spec["slice"]
-        generators.make_index_slice_var(
-            table, spec["name"], start, stop, dtype=spec.get("dtype", "int64")
+        generators.make_slice_var(
+            base_table,
+            spec["name"],
+            start,
+            stop,
+            source=spec.get("source"),
+            dtype=spec.get("dtype", "int64"),
         )
 
 
@@ -90,15 +96,15 @@ def fillna_median(series: pd.Series) -> pd.Series:
 
 
 def register_agent_geography_ids(config: dict[str, Any]) -> None:
-    """Broadcast each geography id from the base geography onto the agent tables via the base id."""
-    base_table = config["base_geography"]["table"]
-    base_id = config["base_geography"]["id"]
-    geographic_levels = [tuple(g) for g in config["geographic_levels"]]
+    """Broadcast each level's id from the base geography onto the agent tables via the base id."""
+    base_table, base_id = geography.base_geography(config)
+    # the base id is the join key itself, so an agent table without it cannot be located at all
+    level_ids = [id_ for id_ in dict.fromkeys(geography.geography_level_keys(config).values()) if id_ != base_id]
     agents = [agent for agent in config["variables_to_aggregate"] if agent != base_table]
 
     for agent in agents:
         agent_columns = orca.get_table(agent).columns
-        for _, geography_id in geographic_levels:
+        for geography_id in level_ids:
             if geography_id in agent_columns:
                 continue
             generators.make_disagg_var(base_table, agent, geography_id, base_id, name_based_on_geography=False)
@@ -106,13 +112,13 @@ def register_agent_geography_ids(config: dict[str, Any]) -> None:
 
 def register_aggregation_variables(config: dict[str, Any], generated_variables: set[str]) -> None:
     """Register total_<agent> size variables and mean/median/std/sum attribute variables at each geography."""
-    geographic_levels = [tuple(g) for g in config["geographic_levels"]]
+    level_keys = geography.geography_level_keys(config)
     aggregation_functions = config["aggregation_functions"]
     variables_to_aggregate = config["variables_to_aggregate"]
     sum_vars = set(config["sum_vars"])
 
     for agent, variables in variables_to_aggregate.items():
-        for geography_name, geography_id in geographic_levels:
+        for geography_name, geography_id in level_keys.items():
             if geography_name == agent:
                 continue
 
@@ -134,7 +140,7 @@ def register_aggregation_variables(config: dict[str, Any], generated_variables: 
 
 def register_proportion_variables(config: dict[str, Any], generated_variables: set[str]) -> None:
     """Register prop_<var>_<category> variables for discrete variables with more than 5000 occurrences."""
-    geographic_levels = [tuple(g) for g in config["geographic_levels"]]
+    level_keys = geography.geography_level_keys(config)
     discrete_variables = config["discrete_variables"]
 
     for agent, discrete_vars in discrete_variables.items():
@@ -143,16 +149,16 @@ def register_proportion_variables(config: dict[str, Any], generated_variables: s
             agents_by_cat = agents[var].value_counts()
             cats_to_measure = agents_by_cat[agents_by_cat > 5000].index.values
             for cat in cats_to_measure:
-                for geography_name, geography_id in geographic_levels:
+                for geography_name, geography_id in level_keys.items():
                     generators.make_proportion_var(agent, geography_name, geography_id, var, cat)
                 generated_variables.add("prop_%s_%s" % (var, int(cat)))
 
 
 def register_ratio_and_density_variables(config: dict[str, Any], generated_variables: set[str]) -> None:
     """Register the configured agent ratios, plus density_<agent>, at each geography."""
-    geographic_levels = [tuple(g) for g in config["geographic_levels"]]
+    level_keys = geography.geography_level_keys(config)
 
-    for geography_name, _ in geographic_levels:
+    for geography_name in level_keys:
         for numerator, denominator in config["ratio_variables"]:
             generators.make_ratio_var(numerator, denominator, geography_name)
             generated_variables.add(f"ratio_{numerator}_to_{denominator}")
@@ -164,10 +170,9 @@ def register_ratio_and_density_variables(config: dict[str, Any], generated_varia
 
 def register_base_geography_disaggregations(config: dict[str, Any], generated_variables: set[str]) -> None:
     """Disaggregate every generated variable, plus the configured extra tables, down to the base geography."""
-    base_table = config["base_geography"]["table"]
-    geographic_levels = [tuple(g) for g in config["geographic_levels"]]
+    base_table, _ = geography.base_geography(config)
 
-    for geography_name, geography_id in geographic_levels:
+    for geography_name, geography_id in geography.geography_level_keys(config).items():
         if geography_name == base_table:
             continue
         for var in generated_variables:
@@ -194,7 +199,7 @@ def register_base_geography_disaggregations(config: dict[str, Any], generated_va
 
 def register_geographic_dummies(config: dict[str, Any]) -> None:
     """Register base-geography dummy columns for each distinct value of the configured geography columns."""
-    base_table = config["base_geography"]["table"]
+    base_table, _ = geography.base_geography(config)
 
     for geog_var in config["geog_vars_to_dummify"]:
         geog_ids = np.unique(orca.get_table(base_table)[geog_var])
@@ -232,21 +237,28 @@ def register_pandana_access_variable(
     column_name: str,
     onto_table: str,
     pois_table: str,
-    variable_to_summarize: str,
+    variable_to_summarize: str | None,
     distance: int,
     node_column: str = "node_id",
     agg_type: str = "sum",
     decay: str = "linear",
     log: bool = True,
 ):
-    """Register a pandana network-distance accessibility column."""
+    """Register a pandana network-distance accessibility column.
+
+    `variable_to_summarize` names the column of the POI table to aggregate; when it is None
+    the POIs are counted instead, e.g. the number of stops within the distance.
+    """
 
     @orca.column(onto_table, column_name, cache=True, cache_scope="iteration")
     def column_func():
         net = orca.get_injectable("net")
-        table = orca.get_table(pois_table).to_frame([node_column, variable_to_summarize])
+        columns = [node_column] if variable_to_summarize is None else [node_column, variable_to_summarize]
+        table = orca.get_table(pois_table).to_frame(columns)
         df = orca.get_table(onto_table).to_frame(node_column)
-        net.set(table[node_column], variable=table[variable_to_summarize])
+        # pandana counts the locations when the variable is omitted
+        variable = None if variable_to_summarize is None else table[variable_to_summarize]
+        net.set(table[node_column], variable=variable)
         results = net.aggregate(distance, type=agg_type, decay=decay)
         if log:
             # signed log: aggregates of signable quantities (e.g. sum_income) can fall
@@ -307,7 +319,7 @@ def register_pandana_variables(config: dict[str, Any]) -> None:
                     var_name,
                     onto_table,
                     poi["pois_table"],
-                    poi["variable"],
+                    poi.get("variable"),
                     distance,
                     node_column=node_column,
                     agg_type=poi.get("agg_type", "sum"),

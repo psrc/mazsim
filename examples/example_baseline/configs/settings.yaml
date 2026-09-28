@@ -9,7 +9,7 @@ output_dir: output
 data_model: data_model.py
 
 # column holding each agent's location, at the finest geography in variables.yaml
-geography_id: block_id
+geography_id: maz_id
 
 base_year: 2020
 end_year: 2050

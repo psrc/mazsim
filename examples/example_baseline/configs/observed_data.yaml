@@ -5,7 +5,7 @@
 table: observed_data
 
 # columns in the table above
-id_column: block_id
+id_column: maz_id
 type_column: type
 year_column: year
 value_column: value

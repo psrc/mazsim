@@ -9,7 +9,7 @@ import pandas as pd
 @orca.column('blocks', 'vacant_housing_units')
 def vacant_housing_units(blocks, households):
     return blocks.total_housing_units.sub(
-        households.block_id.value_counts(), fill_value=0)
+        households.maz_id.value_counts(), fill_value=0)
 
 # household lcm capacity variable
 @orca.column("blocks", "housing_unit_capacity", cache=True)
@@ -20,7 +20,7 @@ def housing_unit_capacity(blocks, block_capacity):
 @orca.column('blocks', 'vacant_hu_spaces')
 def vacant_hu_spaces(blocks, housing_units):
     return blocks.housing_unit_capacity.sub(
-        housing_units.block_id.value_counts(), fill_value=0).clip(lower=0)
+        housing_units.maz_id.value_counts(), fill_value=0).clip(lower=0)
 
 @orca.column("blocks", "job_capacity", cache=True)
 def job_capacity(blocks, block_capacity):
@@ -30,7 +30,7 @@ def job_capacity(blocks, block_capacity):
 @orca.column('blocks', 'vacant_job_spaces', cache=False, cache_scope = 'step')
 def vacant_job_spaces(blocks, jobs):
     return blocks.job_capacity.sub(
-        jobs.block_id.value_counts(), fill_value=0).clip(lower=0)
+        jobs.maz_id.value_counts(), fill_value=0).clip(lower=0)
 
 
 #----------------------------------------------------------------------------------------
