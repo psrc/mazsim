@@ -376,8 +376,7 @@ class JobCalibTargets(pa.DataFrameModel):
 
     tract_id: tract ID (repeated per aggr_sector_id)
     aggr_sector_id: aggregated employment sector, see aggr_sector_map in variables.yaml
-    jobs_2020, jobs_2010: observed job counts
-    jobs_target: target job count
+    jobs_2010, jobs_2020: observed job counts; calibrate.yaml calibrates the growth between them
     """
 
     tract_id: int = pa.Field(ge=0)
@@ -396,8 +395,8 @@ class HouseholdCalibTargets(pa.DataFrameModel):
 
     tract_id: tract ID (repeated per income_quartile)
     income_quartile: household income quartile, see IncomeQuartile
-    households_2010, households_2020: observed household counts
-    households_target: target household count
+    households_2010, households_2020: observed household counts; calibrate.yaml calibrates the
+        growth between them
     """
 
     tract_id: int = pa.Field(ge=0)
@@ -416,8 +415,7 @@ class HousingUnitCalibTargets(pa.DataFrameModel):
 
     tract_id: tract ID (repeated per unit_type_id)
     unit_type_id: tenure/structure grouping, see UnitTypeId
-    units_2010, units_2020: observed unit counts
-    units_target: target unit count
+    units_2010, units_2020: observed unit counts; calibrate.yaml calibrates the growth between them
     """
 
     tract_id: int = pa.Field(ge=0)

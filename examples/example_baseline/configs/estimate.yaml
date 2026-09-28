@@ -8,6 +8,9 @@ estimation_steps:
   - estimate_hulcm
   - estimate_hupm
 
+# chooser/out filter templates are filled with the model's filter_value and with base_year /
+# historic_year from calibrate.yaml
+
 hlcm:
   choosers: households
   chooser_filters_template: (recent_mover == 1) & (income_quartile == {value})
@@ -70,14 +73,14 @@ jlcm:
 
 hulcm:
   choosers: housing_units
-  chooser_filters_template: (year_built > 2010) & (unit_type_id == {value})
+  chooser_filters_template: (year_built > {historic_year}) & (unit_type_id == {value})
   alternatives: blocks
   choice_column: maz_id
   constrained_choices: true
   alt_sample_size: 50
   alt_capacity: vacant_hu_spaces
   out_alt_filters: vacant_hu_spaces > 0
-  out_chooser_filters_template: (maz_id == -1) & (year_built > 2010) & (unit_type_id == {value})
+  out_chooser_filters_template: (maz_id == -1) & (year_built > {historic_year}) & (unit_type_id == {value})
   expl_vars:
     - major_road_node_sum_800_flat
     - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time

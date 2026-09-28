@@ -19,71 +19,75 @@ from urbansim_templates import modelmanager as mm
 from mazsim import data_loader, submodels, variable_loader
 from mazsim.submodels import initialize_submodels
 
-# maps each lcm name to the agent-letter/target-type conventions used by _model_calibration
-LCM_AGENTS = {
-    "hlcm": "h",
-    "jlcm": "j",
-    "hulcm": "hu",
-}
-TARGET_COLS = {
-    "household": "households_target",
-    "job": "jobs_target",
-    "housing_unit": "units_target",
-}
-
 
 def _load_calibrate_yaml(project_dir: Path) -> dict[str, Any]:
     config_path = project_dir / "configs" / "calibrate.yaml"
     return yaml.safe_load(config_path.read_text())
 
 
-def _load_config(project_dir: Path, key: str) -> dict[str, Any]:
-    return _load_calibrate_yaml(project_dir)[key]
+def _get_calib_targets(
+    lcm: str,
+    lcm_config: dict[str, Any],
+    base_year: int,
+    historic_year: int,
+    target_geography: str,
+) -> dict[str, Any]:
+    """Build per-target-geography growth targets/shares for one LCM from its calib_targets table.
 
-
-def _get_calib_targets(target_type: str) -> dict[str, pd.DataFrame]:
-    """Build per-tract growth targets/shares for a target type (household/job/housing_unit)."""
-    var_dict = {
-        "job": {
-            "lcm": "jlcm",
-            "str_replace": "",
-            "target_col": "jobs_target",
-        },
-        "household": {
-            "lcm": "hlcm",
-            "str_replace": "(recent_mover == 1) & ",
-            "target_col": "households_target",
-        },
-        "housing_unit": {
-            "lcm": "hulcm",
-            "str_replace": "(year_built > 2010) & ",
-            "target_col": "units_target",
-        },
-    }
-
-    # empty tract df
-    idx = list(orca.get_table("blocks").to_frame("tract_id")["tract_id"].unique())
+    The tables carry one observed count per year of the period, so the target is the change
+    between the base year and the historic year, floored at zero: a geography that lost
+    households, jobs, or units is never calibrated toward negative growth.
+    """
+    # empty target geography df
+    idx = list(orca.get_table("blocks").to_frame(target_geography)[target_geography].unique())
     df = pd.DataFrame(index=idx)
 
     # get target data
-    data = orca.get_table(f"{target_type}_calib_targets").local
+    data = orca.get_table(f"{lcm_config['target_type']}_calib_targets").local
     data = data.fillna(0)
 
-    lcm = var_dict[target_type]["lcm"]
-    target_col = var_dict[target_type]["target_col"]
+    # the target column these tables used to carry, rebuilt from the per-year counts
+    count_prefix = lcm_config["count_column_prefix"]
+    target_col = f"{count_prefix}_growth"
+    data[target_col] = (
+        data[f"{count_prefix}_{base_year}"] - data[f"{count_prefix}_{historic_year}"]
+    ).clip(lower=0)
 
+    # the calib_targets tables only hold the columns the segment is read from, so the clause the
+    # sub-models filter their estimation sample on has to come back off before querying
+    strip = lcm_config.get("chooser_filter_strip", "").format(
+        base_year=base_year, historic_year=historic_year
+    )
     for segment in orca.get_injectable(f"{lcm}_step_names"):
-        filter_ = mm.get_step(segment).chooser_filters.replace(var_dict[target_type]["str_replace"], "")
-        data.loc[data.query(filter_).index, "segment"] = segment.replace(lcm, "")
+        chooser_filters = mm.get_step(segment).chooser_filters
+        if strip and strip not in chooser_filters:
+            raise ValueError(
+                f"{segment}: chooser_filters {chooser_filters!r} do not contain the configured "
+                f"chooser_filter_strip {strip!r}; re-estimate the sub-models after changing the "
+                f"calibration period."
+            )
+        target_filters = chooser_filters.replace(strip, "")
+        data.loc[data.query(target_filters).index, "segment"] = segment.replace(lcm, "")
 
-    data_gr = data.groupby(["tract_id", "segment"])[target_col].sum().unstack().reindex(df.index).fillna(0)
+    data_gr = (
+        data.groupby([target_geography, "segment"])[target_col]
+        .sum()
+        .unstack()
+        .reindex(df.index)
+        .fillna(0)
+    )
 
     for model_name in orca.get_injectable(f"{lcm}_step_names"):
         segment = model_name.replace(lcm, "")
+        if segment not in data_gr.columns:
+            raise ValueError(
+                f"{lcm_config['target_type']}_calib_targets has no rows matching segment "
+                f"{segment!r} of {model_name}; add that segment's targets or drop the sub-model."
+            )
         df[f"growth_{segment}"] = np.clip(data_gr[segment], 0, None)
         df[f"growth_perc_{segment}"] = df[f"growth_{segment}"] / df[f"growth_{segment}"].sum()
 
-    return {"calib_raw": data, "calib_clean": df}
+    return {"calib_raw": data, "calib_clean": df, "target_col": target_col}
 
 
 def _standardize_coefficients(model) -> None:
@@ -95,9 +99,12 @@ def _standardize_coefficients(model) -> None:
 
 def _model_calibration(
     segment,
-    agent,
+    lcm,
+    capacity_var,
     calib_targets,
     aggr_growth,
+    target_geography,
+    county_geography,
     max_iter=10000,
     tol=1e-13,
     step_size=0.001,
@@ -106,11 +113,11 @@ def _model_calibration(
     param_scale=0.001,
     max_alloc_iter=10,
 ):
-    """Calibrate one registered LCM sub-model's coefficients to match target growth shares by tract."""
+    """Calibrate one registered LCM sub-model's coefficients to match target growth shares by target geography."""
     print(f"\nCalibrating segment: {segment}\n")
 
     # get model segment id
-    segment_id = segment.replace(f"{agent}lcm", "")
+    segment_id = segment.replace(lcm, "")
 
     # re-fit model with standardized coefficients if desired
     m = copy.copy(mm.get_step(segment))
@@ -118,36 +125,32 @@ def _model_calibration(
     if std:
         _standardize_coefficients(m)
 
-    # set id geog to tract
-    idx_geog_col = "tract_id"
+    # the model has to be constrained by the capacity the calibration allocates growth into
+    if m.alt_capacity and m.alt_capacity != capacity_var:
+        raise ValueError(
+            f"{segment}: capacity_var {capacity_var!r} does not match the sub-model's "
+            f"alt_capacity {m.alt_capacity!r}."
+        )
 
     # get model expression and parameters
     expvar_names = m.model_expression[:-4].split(" + ")
     fitted_parameters = m.fitted_parameters
 
-    # add county-level indicators if desired, one per distinct county_id present in blocks
+    # add county-level indicators if desired, one per distinct county id present in blocks
     extra_calib_cols = []
     if county_calib:
-        county_ids = orca.get_table("blocks").to_frame("county_id")["county_id"].unique()
-        extra_calib_cols += [f"county_id_is_{county_id}" for county_id in county_ids]
+        county_ids = orca.get_table("blocks").to_frame(county_geography)[county_geography].unique()
+        extra_calib_cols += [f"{county_geography}_is_{county_id}" for county_id in county_ids]
         if std:
             extra_calib_cols = ["st_" + col for col in extra_calib_cols]
 
     calib_expvars = expvar_names + extra_calib_cols
 
-    capacity_dict = {
-        "j": "vacant_job_spaces",
-        "h": "vacant_housing_units",
-        "hu": "vacant_hu_spaces",
-    }
-
-    capacity_var = capacity_dict[agent]
-
-    # get exp vars and vacant job spaces by block with tract id
-    tracking_cols = [capacity_var, idx_geog_col]
+    # get exp vars and vacant capacity by block with the target geography
+    tracking_cols = [capacity_var, target_geography]
     buildings = orca.get_table("blocks").to_frame(calib_expvars + tracking_cols)
 
-    # tracking: vacant units and tract id
+    # tracking: vacant capacity and target geography
     tracking_table = buildings[tracking_cols]
 
     # get array of vacant capacity by block
@@ -164,11 +167,11 @@ def _model_calibration(
     w = np.concatenate((np.array(fitted_parameters), extra_calib_cols_init))
     w = w.reshape((1, len(w)))
 
-    # Get unique tract ids by block
-    calib_geog_id = np.copy(tracking_table[idx_geog_col])
+    # Get unique target geography ids by block
+    calib_geog_id = np.copy(tracking_table[target_geography])
     unique_calib_geogs = np.unique(calib_geog_id)
     unique_calib_geogs_map = pd.Series(unique_calib_geogs).reset_index().set_index(0)["index"]
-    calib_geog_id_idx = pd.Series(tracking_table[idx_geog_col]).map(unique_calib_geogs_map).fillna(0).values
+    calib_geog_id_idx = pd.Series(tracking_table[target_geography]).map(unique_calib_geogs_map).fillna(0).values
     unique_calib_geog_id_idx = np.unique(calib_geog_id_idx)
     geog_idxs = {}
     for geog in unique_calib_geog_id_idx:
@@ -290,20 +293,27 @@ def _calibrate_lcm(project_dir: Path, lcm: str) -> None:
     calibrate_config = _load_calibrate_yaml(project_dir)
     lcm_config = calibrate_config[lcm]
 
-    calib_dict = _get_calib_targets(lcm_config["target_type"])
+    base_year = calibrate_config["base_year"]
+    historic_year = calibrate_config["historic_year"]
+
+    calib_dict = _get_calib_targets(
+        lcm, lcm_config, base_year, historic_year, calibrate_config["target_geography"]
+    )
     df_calib = calib_dict["calib_clean"]
     raw_data = calib_dict["calib_raw"]
 
-    target_col = TARGET_COLS[lcm_config["target_type"]]
     # the target column holds change over the whole period, but the lcms allocate one year at a time
-    aggr_growth = raw_data[target_col].sum() / (calibrate_config["base_year"] - calibrate_config["historic_year"])
+    aggr_growth = raw_data[calib_dict["target_col"]].sum() / (base_year - historic_year)
 
     for segment in orca.get_injectable(f"{lcm}_step_names"):
         m = _model_calibration(
             segment=segment,
-            agent=LCM_AGENTS[lcm],
+            lcm=lcm,
+            capacity_var=lcm_config["capacity_var"],
             calib_targets=df_calib,
             aggr_growth=aggr_growth,
+            target_geography=calibrate_config["target_geography"],
+            county_geography=calibrate_config["county_geography"],
             max_iter=lcm_config.get("max_iter", 10000),
             tol=lcm_config.get("tol", 1e-13),
             step_size=lcm_config.get("step_size", 0.001),

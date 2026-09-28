@@ -21,22 +21,37 @@ def _load_estimate_yaml(project_dir: Path) -> dict[str, Any]:
     return yaml.safe_load(config_path.read_text())
 
 
+def _load_calibration_period(project_dir: Path) -> tuple[int, int]:
+    """The base/historic years from calibrate.yaml, which fill the filter template placeholders."""
+    config_path = project_dir / "configs" / "calibrate.yaml"
+    if not config_path.is_file():
+        raise FileNotFoundError(
+            f"{config_path} not found; it supplies base_year and historic_year, which the "
+            "sub-model filter templates are filled from."
+        )
+    calibrate_yaml = yaml.safe_load(config_path.read_text())
+    return calibrate_yaml["base_year"], calibrate_yaml["historic_year"]
+
+
 def _load_config(project_dir: Path, key: str) -> dict[str, Any]:
     return _load_estimate_yaml(project_dir)[key]
 
 
-def _fit_submodel(config: dict[str, Any], model_config: dict[str, Any]) -> None:
+def _fit_submodel(
+    config: dict[str, Any], model_config: dict[str, Any], base_year: int, historic_year: int
+) -> None:
     """Fit one location choice sub-model (household, job, or housing unit) and register it with modelmanager."""
     filter_value = model_config["filter_value"]
+    period = {"base_year": base_year, "historic_year": historic_year}
 
     m = LargeMultinomialLogitStep()
     m.choosers = [config["choosers"]]
-    m.chooser_filters = config["chooser_filters_template"].format(value=filter_value)
+    m.chooser_filters = config["chooser_filters_template"].format(value=filter_value, **period)
     m.alternatives = [config["alternatives"]]
     m.choice_column = config["choice_column"]
     m.constrained_choices = config["constrained_choices"]
     m.alt_sample_size = config["alt_sample_size"]
-    m.out_chooser_filters = config["out_chooser_filters_template"].format(value=filter_value)
+    m.out_chooser_filters = config["out_chooser_filters_template"].format(value=filter_value, **period)
     m.alt_capacity = config["alt_capacity"]
     m.out_alt_filters = config["out_alt_filters"]
 
@@ -66,9 +81,10 @@ def estimate_hlcm(project_dir: Path) -> None:
     """Fit and register every HLCM sub-model listed in estimate.yaml."""
     initialize_submodels(project_dir)
     config = _load_config(project_dir, "hlcm")
+    base_year, historic_year = _load_calibration_period(project_dir)
 
     for model_config in config["models"]:
-        _fit_submodel(config, model_config)
+        _fit_submodel(config, model_config, base_year, historic_year)
 
 
 @orca.step("estimate_jlcm")
@@ -76,9 +92,10 @@ def estimate_jlcm(project_dir: Path) -> None:
     """Fit and register every JLCM sub-model listed in estimate.yaml."""
     initialize_submodels(project_dir)
     config = _load_config(project_dir, "jlcm")
+    base_year, historic_year = _load_calibration_period(project_dir)
 
     for model_config in config["models"]:
-        _fit_submodel(config, model_config)
+        _fit_submodel(config, model_config, base_year, historic_year)
 
 
 @orca.step("estimate_hulcm")
@@ -87,9 +104,10 @@ def estimate_hulcm(project_dir: Path) -> None:
     """Fit and register every HULCM sub-model listed in estimate.yaml."""
     initialize_submodels(project_dir)
     config = _load_config(project_dir, "hulcm")
+    base_year, historic_year = _load_calibration_period(project_dir)
 
     for model_config in config["models"]:
-        _fit_submodel(config, model_config)
+        _fit_submodel(config, model_config, base_year, historic_year)
 
 
 @orca.step("estimate_hupm")

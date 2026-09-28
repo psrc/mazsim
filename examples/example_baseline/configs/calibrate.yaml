@@ -11,11 +11,25 @@ calibration_steps:
   - calibrate_hulcm
 
 
-# period spanned by the target columns, used to annualize them
+# period spanned by the observed counts in the calib_targets tables; growth over the period is
+# annualized with it, and it fills the {base_year}/{historic_year} placeholders in the
+# chooser_filter_strip templates below
 base_year: 2020
 historic_year: 2010
 
-# each of hlcm/jlcm/hulcm accepts these optional keys (defaults shown):
+# geography columns on the base table; growth targets are matched per target_geography, and
+# county_geography supplies the indicators added when a sub-model sets county_calib
+target_geography: tract_id
+county_geography: county_id
+
+# each of hlcm/jlcm/hulcm defines:
+#   target_type: the <target_type>_calib_targets table holding the observed counts
+#   count_column_prefix: its per-year counts, read as <prefix>_<year> columns; the growth between
+#     base_year and historic_year (floored at zero) is the calibrated target
+#   capacity_var: the capacity column each year's growth is allocated into
+#   chooser_filter_strip: the clause the sub-models' chooser_filters add to select their
+#     estimation sample, which the calib_targets tables cannot evaluate; defaults to empty
+# and accepts these optional keys (defaults shown):
 #   max_iter: 10000        max calibration iterations
 #   tol: 1.0e-13           loss-improvement threshold to stop early
 #   step_size: 0.001       adam optimizer step size
@@ -25,10 +39,18 @@ historic_year: 2010
 #   max_alloc_iter: 10     capacity-constrained allocation loop iterations
 hlcm:
   target_type: household
+  count_column_prefix: households
+  capacity_var: vacant_housing_units
+  chooser_filter_strip: "(recent_mover == 1) & "
   tol: 1.0e-11
 
 jlcm:
   target_type: job
+  count_column_prefix: jobs
+  capacity_var: vacant_job_spaces
 
 hulcm:
   target_type: housing_unit
+  count_column_prefix: units
+  capacity_var: vacant_hu_spaces
+  chooser_filter_strip: "(year_built > {historic_year}) & "
