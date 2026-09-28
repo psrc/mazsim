@@ -7,7 +7,7 @@ calibration_steps:
   - register_variables
   - setup_lcms
   - calibrate_hlcm
-  - calibrate_jlcm
+  # - calibrate_jlcm
   - calibrate_hulcm
 
 
@@ -44,10 +44,10 @@ hlcm:
   chooser_filter_strip: "(recent_mover == 1) & "
   tol: 1.0e-11
 
-jlcm:
-  target_type: job
-  count_column_prefix: jobs
-  capacity_var: vacant_job_spaces
+# jlcm:
+#   target_type: job
+#   count_column_prefix: jobs
+#   capacity_var: vacant_job_spaces
 
 hulcm:
   target_type: housing_unit

@@ -47,6 +47,27 @@ def generate_subregion_model(subregion, segment, subregion_column):
     return model_object.name
 
 
+def _use_calibrated_submodels(group, group_config, running_calibrate):
+    """Whether `group` should run its calibrated sub-models rather than the estimated ones."""
+    # a calibration run always fits the estimated submodels, whatever the settings.yaml flags say
+    if running_calibrate:
+        return False
+
+    setting = group_config.get('calibrated_setting')
+    if not setting:
+        raise ValueError(
+            "submodel_list.yaml: submodel_groups.{} has no calibrated_setting; it must name the "
+            "settings.yaml flag (e.g. calibrated_hh) deciding whether the group's sub-models are "
+            "calibrated.".format(group)
+        )
+    if not orca.is_injectable(setting):
+        raise ValueError(
+            "settings.yaml has no {} flag, which submodel_list.yaml points at with "
+            "submodel_groups.{}.calibrated_setting.".format(setting, group)
+        )
+    return bool(orca.get_injectable(setting))
+
+
 @orca.step('setup_lcms')
 def setup_lcms(project_dir):
     """Register a "<group>_step_names" injectable for every group in submodel_list.yaml."""
@@ -55,18 +76,22 @@ def setup_lcms(project_dir):
     subregion_source = cfg['subregion_source']
     subregion_column = subregion_source['column']
 
-    # calibration runs always fit the uncalibrated submodels; simulation runs use the
-    # calibrated submodels only when 'calibrated' is set in settings.yaml
+    # calibration runs always fit the uncalibrated submodels; simulation runs use a group's
+    # calibrated submodels only when that group's settings.yaml flag is set
     # 'running_calibrate' is only injected by the calibrate command
     running_calibrate = orca.is_injectable('running_calibrate') and orca.get_injectable('running_calibrate')
-    use_calibrated_submodels = orca.get_injectable('calibrated') and not running_calibrate
-    submodel_list_name = 'submodel_list_calib' if use_calibrated_submodels else 'submodel_list'
-    models_from_yaml = orca.get_injectable(submodel_list_name)
 
-    for group, segments in models_from_yaml.items():
-        if group not in groups:
-            continue
-        group_config = groups[group]
+    for group, group_config in groups.items():
+        list_name = 'submodel_list_calib' \
+            if _use_calibrated_submodels(group, group_config, running_calibrate) \
+            else 'submodel_list'
+        models_from_yaml = orca.get_injectable(list_name)
+        if group not in models_from_yaml:
+            raise ValueError(
+                "submodel_list.yaml has no {} entry in {}; add its sub-models there or remove the "
+                "group from submodel_groups.".format(group, list_name)
+            )
+        segments = models_from_yaml[group]
         unsegmented = [segment.split('.')[0] for segment in segments]
 
         if orca.get_injectable(group_config['ct_type']) == 'sub_ct':

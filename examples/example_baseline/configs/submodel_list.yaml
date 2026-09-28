@@ -1,15 +1,20 @@
 # Metadata for each group in the submodel lists below, read by setup_lcms.
 # ct_type names the settings.yaml injectable that decides whether the group is
-# segmented by subregion; each group registers a "<group>_step_names" injectable.
+# segmented by subregion; calibrated_setting names the settings.yaml flag that decides
+# whether the group runs its submodel_list_calib submodels instead of the estimated ones.
+# Each group registers a "<group>_step_names" injectable.
 submodel_groups:
   hlcm:
     ct_type: hh_ct_type
+    calibrated_setting: calibrated_hh
   hulcm:
     ct_type: hh_ct_type
+    calibrated_setting: calibrated_hu
     # unsegmented step names, used by the calibration steps
     unsegmented_injectable: reg_hulcm_step_names
   jlcm:
     ct_type: job_ct_type
+    calibrated_setting: calibrated_jobs
     # unsegmented step names, used by the calibration steps
     unsegmented_injectable: reg_jlcm_step_names
 
@@ -33,7 +38,6 @@ submodel_list:
     - hulcm1.yaml
     - hulcm2.yaml
     - hulcm3.yaml
-    - hulcm4.yaml
   hlcm:
     - hlcm1.yaml
     - hlcm2.yaml
@@ -52,15 +56,14 @@ submodel_list_calib:
     - hulcm1_calib.yaml
     - hulcm2_calib.yaml
     - hulcm3_calib.yaml
-    - hulcm4_calib.yaml
   hlcm:
     - hlcm1_calib.yaml
     - hlcm2_calib.yaml
     - hlcm3_calib.yaml
     - hlcm4_calib.yaml
-  jlcm:
-    - jlcm5_calib.yaml
-    - jlcm4_calib.yaml
-    - jlcm3_calib.yaml
-    - jlcm2_calib.yaml
-    - jlcm1_calib.yaml
+  # jlcm:
+  #   - jlcm5_calib.yaml
+  #   - jlcm4_calib.yaml
+  #   - jlcm3_calib.yaml
+  #   - jlcm2_calib.yaml
+  #   - jlcm1_calib.yaml
