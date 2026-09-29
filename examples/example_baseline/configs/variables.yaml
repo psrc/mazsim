@@ -1,61 +1,54 @@
 # Configuration for orca variable registration (the "register_variables" step in variables.py).
 
-# The finest geography; its table is indexed by this id, agents are located at it, and the
-# location choice models write it as their choice. Other finer ids (block_id) stay on that
-# table as ordinary columns.
+# The finest geography; every other geography nests within it and variables land on it.
 base_geography: {table: blocks, id: maz_id}
 
-# Agent tables that keep their location on a parent table rather than on their own rows. Each
-# record reaches its parent through `key`, and the parent's base geography id is copied down,
-# so these agents can be located and aggregated like the agents carrying the id themselves.
-# Persons, for instance, are located at their household's maz.
+# Linked agents define hierarchical relationships between tables, where each child agent references a parent agent.
 linked_agents:
   persons: {parent: households, key: household_id}
 
-# Parent geography ids carved out of a finer id's prefix. `source` is the column to slice
-# (the table's index when omitted); the base geography's table is indexed by its own id, so
-# these slice block_id.
+# Parent geography ids carved out of the base geography's index, which is a 15-digit census block id.
 geography_ids:
   - {name: county_id, source: block_id, slice: [0, 6]}
   - {name: tract_id, source: block_id, slice: [0, 12]}
   - {name: block_group_id, source: block_id, slice: [0, 13]}
 
-# [level name, id column] for every level modeled above the base geography. Each declared id
-# column has to be carried on the base geography's table: a raw column like zone_id, or one
-# carved out by geography_ids above. The level holding the base geography's own rows ("blocks")
-# always resolves to the base id, whatever id it declares.
 geographic_levels:
   - [block_groups, block_group_id]
   - [tracts, tract_id]
   - [counties, county_id]
-  - [zones, zone_id]
   - [blocks, maz_id]
+  - [zones, zone_id]
 
 aggregation_functions: [mean, median, std, sum]
 
 # Only vars listed in sum_vars get a "sum" aggregation; every var gets the other aggregation_functions.
 variables_to_aggregate:
-  persons: [worker_aggr_sector]
+  persons: [worker_aggr_sector,worker_aggr_occ]
   households: [persons, cars, income, race_of_head, age_of_head, workers, children, tenure,
                recent_mover]
   jobs: [aggr_sector_id]
-  housing_units: [year_built, built_after_2010, unit_type_id]
+  housing_units: [year_built, built_after_2010, unit_type_id, sf, middle, mf, sf_built_prev_10_years, 
+                  middle_built_prev_10_years, mf_built_prev_10_years]
   blocks: [x, y, acres, res_rent, res_value, obs_households, obs_jobs, obs_housing_units]
 
 sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housing_unit_capacity,
-           job_capacity, built_after_2010, obs_households, obs_jobs, obs_housing_units]
+           job_capacity, built_after_2010, obs_households, obs_jobs, obs_housing_units,
+           sf, middle, mf, sf_built_prev_10_years, middle_built_prev_10_years,
+           mf_built_prev_10_years]
 
 # Vars used to build prop_<var>_<category> and density_<agent> variables.
 discrete_variables:
-  persons: [worker_aggr_sector]
+  persons: [worker_aggr_sector,worker_aggr_occ]
   households: [persons, cars, race_of_head, workers, children, tenure, recent_mover]
   jobs: [aggr_sector_id]
-  housing_units: [year_built, unit_type_id, built_after_2010]
+  housing_units: [year_built, unit_type_id]
 
 # Numerator/denominator agent pairs for ratio_<a>_to_<b> at every geography.
 ratio_variables:
   - [jobs, households]
   - [households, housing_units]
+  - [cars, workers]
 
 # Agents getting a density_<agent> variable. make_density_var divides by sum_acres,
 # so the area variable must appear in sum_vars above.
@@ -102,10 +95,13 @@ pandana:
   variables_to_aggregate: [total_households, total_jobs, sum_income,
                           major_road_node, prop_aggr_sector_id_1,
                           prop_aggr_sector_id_2, prop_aggr_sector_id_3,
-                          prop_aggr_sector_id_4, prop_aggr_sector_id_5,
-                          prop_children_0]
-  # Summarized from a separate points-of-interest table, one variable per entry. An entry
-  # without a `variable` counts the POIs reachable within the distance.
+                          prop_aggr_sector_id_4,  prop_aggr_sector_id_5,
+                          prop_children_0,'sum_built_after_2010',
+                          'res_rent','res_value', 'sum_sf', 'sum_middle', 'sum_mf',
+                           'sum_sf_built_prev_10_years',
+                          'sum_middle_built_prev_10_years', 'prop_tenure_1',
+                          'sum_mf_built_prev_10_years', sum_children, prop_cars_0]
+  # Summarized from a separate points-of-interest table, one variable per entry.
   poi_variables:
     - name_template: 'transit_stop_sum_{distance}_{decay}'
       pois_table: transit_stops
