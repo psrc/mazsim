@@ -34,10 +34,9 @@ placement:
     segment_column: unit_type_id
     year_built_column: year_built
     # removing units can leave a block with more agents than spaces, so the excess is unplaced
+    # (persons follow their household's location through variables.yaml linked_agents)
     reconcile:
       agents: households
-      linked_tables:
-        persons: household_id
   jobs:
     table: jobs
     lcm_group: jlcm

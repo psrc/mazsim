@@ -95,10 +95,22 @@ def fillna_median(series: pd.Series) -> pd.Series:
     return series.fillna(series.median())
 
 
+def register_linked_agent_geography_ids(config: dict[str, Any]) -> None:
+    """Copy the base geography id down from a parent row onto agents that keep their location there."""
+    _, base_id = geography.base_geography(config)
+
+    for agent, spec in config.get("linked_agents", {}).items():
+        # an agent table that already carries the id, e.g. from its input data, is left alone
+        if base_id in orca.get_table(agent).columns:
+            continue
+        generators.make_disagg_var(spec["parent"], agent, base_id, spec["key"], name_based_on_geography=False)
+
+
 def register_agent_geography_ids(config: dict[str, Any]) -> None:
     """Broadcast each level's id from the base geography onto the agent tables via the base id."""
     base_table, base_id = geography.base_geography(config)
-    # the base id is the join key itself, so an agent table without it cannot be located at all
+    # every agent table is joined on the base id, so it has to be on an agent table before its
+    # levels resolve; linked agents got theirs from their parent table above
     level_ids = [id_ for id_ in dict.fromkeys(geography.geography_level_keys(config).values()) if id_ != base_id]
     agents = [agent for agent in config["variables_to_aggregate"] if agent != base_table]
 
@@ -385,6 +397,9 @@ def register_variables(project_dir: Path) -> None:
     config = _load_config(project_dir)
 
     register_geography_ids(config)
+    # agents linked to a parent table (persons -> households) need the base id before the level
+    # broadcast and every aggregation below can locate them
+    register_linked_agent_geography_ids(config)
     register_agent_geography_ids(config)
     register_derived_variables(config)
 

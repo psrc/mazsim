@@ -94,10 +94,16 @@ def refresh_subregion(table_name):
     orca.add_table(table_name, df)
 
 
-def update_linked_table(tbl, col_name, added, copied, removed):
-    """Keep a child table (e.g. persons) in sync after rows were cloned from or dropped out of its parent."""
-    table = tbl.local
-    table = table.loc[~table[col_name].isin(set(removed))]
+def update_linked_table(parent_index, tbl, col_name, added, copied, removed):
+    """Keep a child table (e.g. persons) in sync after rows were cloned from or dropped out of its parent.
+
+    A child row is dropped when its parent is gone: reported in `removed`, or absent from
+    `parent_index` because the transition dropped it without reporting it. Children are cloned
+    for each added parent from the rows of the parent it was copied from.
+    """
+    original = tbl.local
+    keep = original[col_name].isin(parent_index) & ~original[col_name].isin(set(removed))
+    table = original.loc[keep]
 
     if added is None or len(added) == 0:
         return table
@@ -108,19 +114,23 @@ def update_linked_table(tbl, col_name, added, copied, removed):
          pd.Series(added, name="temp_id").reset_index(drop=True)],
         axis=1,
     )
-    new_rows = id_map.merge(table.reset_index(), on=col_name)
+    # clones come from the original table: a copied row can be removed in the same transition,
+    # and its children still have to reach the parent it was copied to
+    new_rows = id_map.merge(original.reset_index(), on=col_name)
     new_rows = new_rows.drop(columns=[col_name, index_name or "index"])
     new_rows = new_rows.rename(columns={"temp_id": col_name})
 
-    starting_index = table.index.max() + 1
+    # start past the original rows so the ids of rows removed in this step are not reused
+    starting_index = original.index.max() + 1
     new_rows.index = pd.RangeIndex(starting_index, starting_index + len(new_rows), name=index_name)
 
     return pd.concat([table, new_rows])
 
 
-def _apply_linked_tables(linked_tables, added, copied, removed):
+def _apply_linked_tables(linked_tables, parent_index, added, copied, removed):
+    """Sync every linked table to the transition's added, copied, and removed parent rows."""
     for table_name, (table, col) in linked_tables.items():
-        updated_linked = update_linked_table(table, col, added, copied, removed)
+        updated_linked = update_linked_table(parent_index, table, col, added, copied, removed)
         orca.add_table(table_name, updated_linked)
         print(f"{table_name} now has {len(updated_linked):,} rows.")
 
@@ -178,7 +188,7 @@ def control_total_transition(agents, agent_controls, totals_column, ct_type, cur
     updated, added, copied, removed = tran.transition(agent_df, current_year)
 
     updated = _flag_new_agents(updated, added, location_fname, year_built_column, current_year)
-    _apply_linked_tables(linked_tables, added, copied, removed)
+    _apply_linked_tables(linked_tables, updated.index, added, copied, removed)
 
     print(f"{agents.name} has {len(updated):,} rows after the transition.")
     orca.add_table(agents.name, updated[agents.local_columns])
@@ -193,7 +203,7 @@ def growth_rate_transition(tbl, rate, current_year, location_fname, linked_table
     df, added, copied, removed = GrowthRateTransition(rate).transition(df_base, None)
 
     df = _flag_new_agents(df, added, location_fname, year_built_column, current_year)
-    _apply_linked_tables(linked_tables, added, copied, removed)
+    _apply_linked_tables(linked_tables, df.index, added, copied, removed)
 
     print(f"{tbl.name} has {len(df):,} rows after the transition.")
     orca.add_table(tbl.name, df)

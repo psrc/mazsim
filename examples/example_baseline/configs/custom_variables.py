@@ -86,3 +86,12 @@ aggr_sector_map = {
 @orca.column("jobs", "aggr_sector_id", cache=True, cache_scope="iteration")
 def aggr_sector_id(jobs):
     return jobs.sector_id.map(aggr_sector_map)
+
+
+#----------------------------------------------------------------------------------------
+# Custom person variables
+#----------------------------------------------------------------------------------------
+
+@orca.column("persons", "worker_aggr_sector", cache=True, cache_scope="iteration")
+def worker_aggr_sector(persons):
+    return persons.industry.map(aggr_sector_map)

@@ -5,6 +5,13 @@
 # table as ordinary columns.
 base_geography: {table: blocks, id: maz_id}
 
+# Agent tables that keep their location on a parent table rather than on their own rows. Each
+# record reaches its parent through `key`, and the parent's base geography id is copied down,
+# so these agents can be located and aggregated like the agents carrying the id themselves.
+# Persons, for instance, are located at their household's maz.
+linked_agents:
+  persons: {parent: households, key: household_id}
+
 # Parent geography ids carved out of a finer id's prefix. `source` is the column to slice
 # (the table's index when omitted); the base geography's table is indexed by its own id, so
 # these slice block_id.
@@ -28,6 +35,7 @@ aggregation_functions: [mean, median, std, sum]
 
 # Only vars listed in sum_vars get a "sum" aggregation; every var gets the other aggregation_functions.
 variables_to_aggregate:
+  persons: [worker_aggr_sector]
   households: [persons, cars, income, race_of_head, age_of_head, workers, children, tenure,
                recent_mover]
   jobs: [aggr_sector_id]
@@ -39,6 +47,7 @@ sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housin
 
 # Vars used to build prop_<var>_<category> and density_<agent> variables.
 discrete_variables:
+  persons: [worker_aggr_sector]
   households: [persons, cars, race_of_head, workers, children, tenure, recent_mover]
   jobs: [aggr_sector_id]
   housing_units: [year_built, unit_type_id, built_after_2010]
