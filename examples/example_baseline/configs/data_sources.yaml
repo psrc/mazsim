@@ -2,11 +2,11 @@
 
 data_sources:
 # baseline data sources, not required for scenarios
-  - blocks: blocks_2020_2026-09-28.csv
-  - households: synthetic_households_2020_2026-10-05.csv
-  - jobs: jobs_2020_2026-10-05.csv
-  - housing_units: synthetic_housing_units_2020_2026-10-05.csv
-  - persons: synthetic_persons_2020_2026-10-05.csv
+  - blocks: blocks_2020_2026-10-06.csv
+  - households: synthetic_households_2020_2026-10-06.csv
+  - jobs: jobs_2020_2026-10-06.csv
+  - housing_units: synthetic_housing_units_2020_2026-10-06.csv
+  - persons: synthetic_persons_2020_2026-10-06.csv
   - transit_stops: transit_stops_2026-09-25.csv
   - urban_centers: urban_centers_2026-09-25.csv
   - nodes: nodes_2026-09-25.csv
@@ -16,13 +16,13 @@ data_sources:
   - observed_data: observed_data_sample.csv
 
 # history year data, used for calibration
-  - history_year_blocks: blocks_2010_2026-10-05.csv
-  - history_year_households: synthetic_households_2010_2026-10-05.csv
-  - history_year_jobs: jobs_2010_2026-10-05.csv
-  - history_year_housing_units: synthetic_housing_units_2010_2026-10-05.csv
-  - history_year_persons: synthetic_persons_2010_2026-10-05.csv
-  - household_calib_targets: household_calib_targets_2026-10-05.csv
-  - housing_unit_calib_targets: housing_unit_calib_targets_2026-10-05.csv
+  - history_year_blocks: blocks_2010_2026-10-06.csv
+  - history_year_households: synthetic_households_2010_2026-10-06.csv
+  - history_year_jobs: jobs_2010_2026-10-06.csv
+  - history_year_housing_units: synthetic_housing_units_2010_2026-10-06.csv
+  - history_year_persons: synthetic_persons_2010_2026-10-06.csv
+  - household_calib_targets: household_calib_targets_2026-10-06.csv
+  - housing_unit_calib_targets: housing_unit_calib_targets_2026-10-06.csv
 
 # scenario data sources
   - block_capacity: block_capacity_baseline.csv
