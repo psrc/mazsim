@@ -21,7 +21,6 @@ data_sources:
   - history_year_jobs: jobs_2010_2026-10-05.csv
   - history_year_housing_units: synthetic_housing_units_2010_2026-10-05.csv
   - history_year_persons: synthetic_persons_2010_2026-10-05.csv
-  - history_year_block_capacity: hist_year_block_capacity_sample_2026-10-05.csv
   - household_calib_targets: household_calib_targets_2026-10-05.csv
   - housing_unit_calib_targets: housing_unit_calib_targets_2026-10-05.csv
 
