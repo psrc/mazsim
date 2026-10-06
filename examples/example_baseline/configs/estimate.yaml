@@ -15,6 +15,7 @@ estimation_steps:
 hlcm:
   choosers: households
   chooser_filters_template: (recent_mover == 1) & (income_quartile == {value})
+  chooser_sample_size: 2000
   alternatives: blocks
   choice_column: maz_id
   constrained_choices: true
@@ -36,6 +37,7 @@ hlcm:
 jlcm:
   choosers: jobs
   chooser_filters_template: aggr_sector_id == {value}
+  chooser_sample_size: 2000
   alternatives: blocks
   choice_column: maz_id
   constrained_choices: true
@@ -59,6 +61,7 @@ jlcm:
 hulcm:
   choosers: housing_units
   chooser_filters_template: (year_built > {historic_year}) & (unit_type_id == {value})
+  chooser_sample_size: 2000
   alternatives: blocks
   choice_column: maz_id
   constrained_choices: true
@@ -89,13 +92,13 @@ hupm:
       filters: (res_rent > 0) & (rent_impute == False)
 
 global_expl_vars:
-  # travel skim variables
+# travel skim variables
   - st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
   - st_ln_zones_total_households_15_minutes_am_single_vehicle_to_work_travel_time
   - st_ln_zones_total_jobs_30_minutes_am_single_vehicle_to_work_travel_time
   - st_ln_zones_total_households_30_minutes_am_single_vehicle_to_work_travel_time
 
-  # hh accessibility variables
+    # hh accessibility variables
   - st_is_transit_stop_sum_800_flat
   - st_is_transit_stop_sum_1600_flat
   - st_is_transit_stop_sum_3200_flat
@@ -130,7 +133,7 @@ global_expl_vars:
   - st_prop_tenure_1_ave_1600_flat
   - st_prop_tenure_1_ave_3200_flat
 
-  # housing unit variables
+    # housing unit variables
   - st_sum_sf_ave_800_flat
   - st_sum_sf_ave_1600_flat
   - st_sum_sf_ave_3200_flat
@@ -151,7 +154,7 @@ global_expl_vars:
   - st_sum_mf_built_prev_10_years_ave_3200_flat
   - st_mean_year_built
 
-  # block group variables
+    # block group variables
   - st_block_groups_median_year_built
   - st_block_groups_median_income
   - st_block_groups_prop_children_0

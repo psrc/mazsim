@@ -14,6 +14,9 @@ from mazsim import config, geography
 # observed counts land on the base geography as obs_<type>; variables.yaml aggregates them to sum_obs_<type>
 OBSERVED_PREFIX = "obs_"
 
+# data_sources.yaml entries with this prefix stand in for the regular table when calibrating
+HISTORY_YEAR_PREFIX = "history_year_"
+
 
 def _validate(table_models, table_name: str, df: pd.DataFrame) -> pd.DataFrame:
     """Validate `df` against `table_name`'s pandera schema, collecting every failure before raising."""
@@ -25,6 +28,58 @@ def _validate(table_models, table_name: str, df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"{table_name}: schema validation failed\n{exc.failure_cases}") from exc
 
 
+def _active_sources(settings: dict) -> list[tuple[str, str, bool]]:
+    """Resolve data_sources.yaml into (table_name, filename, from_history_year) for the current run.
+
+    `history_year_<table>` entries are used only when calibrating, where each one is registered
+    under the regular table name in place of the regular file, so the project's data model,
+    variables, and sub-models apply to it unchanged. Every other run ignores them.
+    """
+    calibrating = orca.is_injectable("running_calibrate") and orca.get_injectable("running_calibrate")
+    sources = [next(iter(entry.items())) for entry in settings.get("data_sources", [])]
+
+    if not calibrating:
+        return [(name, filename, False) for name, filename in sources
+                if not name.startswith(HISTORY_YEAR_PREFIX)]
+
+    history = {name[len(HISTORY_YEAR_PREFIX):]: filename
+               for name, filename in sources if name.startswith(HISTORY_YEAR_PREFIX)}
+    active = [(name, filename, False) for name, filename in sources
+              if not name.startswith(HISTORY_YEAR_PREFIX) and name not in history]
+    active += [(name, filename, True) for name, filename in history.items()]
+    return active
+
+
+def _check_base_geography_ids(history_tables: set[str], base_table: str, base_id: str) -> None:
+    """Check that rows keyed by the base geography id point at blocks that exist.
+
+    The history year tables carry their own base ids, which need not match the regular ones, and
+    the variables reindex onto the blocks by id, so a stray id would silently turn into a zero or
+    a NaN. Mismatches in a history year table are errors; elsewhere, e.g. in observed_data, which
+    is not swapped, they are warnings.
+    """
+    base_index = orca.get_table(base_table).local.index
+    for table_name in orca.list_tables():
+        if table_name == base_table:
+            continue
+        table = orca.get_table(table_name).local
+        if base_id in table.columns:
+            ids = table[base_id]
+        elif table.index.name == base_id:
+            ids = table.index.to_series()
+        else:
+            continue
+
+        stray = ids[~ids.isin(base_index)].unique()
+        if len(stray) == 0:
+            continue
+        message = (f"{table_name}: {len(stray):,} {base_id} value(s) not found in {base_table}, "
+                   f"e.g. {list(stray[:5])}.")
+        if table_name in history_tables:
+            raise ValueError(f"{message} The history year tables must share one set of {base_id}s.")
+        print(f"WARNING: {message}")
+
+
 def register_tables(project_dir: Path) -> None:
     """Load every table in data_sources.yaml, validate it against the project's data model, and register it."""
     data_dir = project_dir / orca.get_injectable('data_dir')
@@ -32,9 +87,8 @@ def register_tables(project_dir: Path) -> None:
 
     settings = config.load_yaml("data_sources.yaml", project_dir)
 
-    for entry in settings["data_sources"]:
-        ((table_name, filename),) = entry.items()
-
+    history_tables = set()
+    for table_name, filename, from_history_year in _active_sources(settings):
         df = pd.read_csv(data_dir / filename)
         df = _validate(data_model.TABLE_MODELS, table_name, df)
 
@@ -43,6 +97,15 @@ def register_tables(project_dir: Path) -> None:
             df = df.set_index(index_col)
 
         orca.add_table(table_name, df)
+        if from_history_year:
+            history_tables.add(table_name)
+
+    if history_tables:
+        print(f"Using history year tables: {sorted(history_tables)}")
+        variables = config.load_yaml("variables.yaml", project_dir)
+        base_table, base_id = geography.base_geography(variables)
+        _check_base_geography_ids(history_tables, base_table, base_id)
+    orca.add_injectable("history_year_tables", history_tables)
 
 
 def register_aggregation_table(table_name, table_id, base_table):
@@ -67,6 +130,12 @@ def _register_observed_data(project_dir):
     df = orca.get_table(cfg["table"]).local
     latest_years = df.groupby(type_col)[year_col].max()
     target = orca.get_table(cfg["target_table"])
+    history_tables = orca.get_injectable("history_year_tables") if orca.is_injectable("history_year_tables") else set()
+    target_is_history_year = cfg["target_table"] in history_tables
+    if target_is_history_year and cfg["table"] not in history_tables:
+        print(f"WARNING: {cfg['table']} is keyed by the regular {cfg['target_table']} ids, so it is not "
+              f"attached to the history year {cfg['target_table']}; add history_year_{cfg['table']} "
+              f"to data_sources.yaml to use it.")
 
     for obs_type in cfg["types"]:
         if obs_type not in latest_years:
@@ -75,6 +144,11 @@ def _register_observed_data(project_dir):
         orca.add_injectable(f"observed_{obs_type}_year", year)
 
         col_name = f"{OBSERVED_PREFIX}{obs_type}"
+        if target_is_history_year and cfg["table"] not in history_tables:
+            # the observed ids belong to the regular geography; the same id can be a different
+            # place in the history year table, so nothing is attached rather than the wrong values
+            orca.add_column(cfg["target_table"], col_name, pd.Series(np.nan, index=target.index))
+            continue
         observed = (
             df.loc[(df[type_col] == obs_type) & (df[year_col] == year)]
             .set_index(id_col)[cfg["value_column"]]
@@ -88,14 +162,10 @@ def _register_observed_data(project_dir):
 
 
 def check_for_missing_tables(project_dir):
-    """Return True if any table listed in data_sources.yaml is missing from disk."""
+    """Return True if any table this run will load from data_sources.yaml is missing from disk."""
     cfg = config.load_yaml("data_sources.yaml", project_dir)
     data_dir_path = Path.joinpath(project_dir, orca.get_injectable('data_dir'))
-    for source in cfg.get("data_sources", []):
-        for _, file_name in source.items():
-            if not (data_dir_path / file_name).exists():
-                return True
-    return False
+    return any(not (data_dir_path / file_name).exists() for _, file_name, _ in _active_sources(cfg))
 
 def unzip_data_archive(project_dir):
     """Extract the data archive if any tables are missing; leftover gaps are caught by schema validation later."""

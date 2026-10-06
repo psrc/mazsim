@@ -151,15 +151,16 @@ def register_aggregation_variables(config: dict[str, Any], generated_variables: 
 
 
 def register_proportion_variables(config: dict[str, Any], generated_variables: set[str]) -> None:
-    """Register prop_<var>_<category> variables for discrete variables with more than 5000 occurrences."""
+    """Register prop_<var>_<category> variables for categories with more than `min_category_count` agents (default 5000)."""
     level_keys = geography.geography_level_keys(config)
     discrete_variables = config["discrete_variables"]
+    min_category_count = config.get("min_category_count", 5000)
 
     for agent, discrete_vars in discrete_variables.items():
         agents = orca.get_table(agent)
         for var in discrete_vars:
             agents_by_cat = agents[var].value_counts()
-            cats_to_measure = agents_by_cat[agents_by_cat > 5000].index.values
+            cats_to_measure = agents_by_cat[agents_by_cat > min_category_count].index.values
             for cat in cats_to_measure:
                 for geography_name, geography_id in level_keys.items():
                     generators.make_proportion_var(agent, geography_name, geography_id, var, cat)

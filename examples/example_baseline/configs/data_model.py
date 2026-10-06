@@ -151,7 +151,7 @@ class Blocks(pa.DataFrameModel):
     """
     Census block land use/parcel data.
 
-    block_id: unique 15-digit census block ID
+    block_id: unique 16-digit census block ID (Includes a leading 1 to not accidentially short states with a leading 0)
     maz_id: MAZ the block belongs to, and the model's base geography (the table's index)
     zone_id: zone the block belongs to
     x, y: block centroid coordinates in epsg: 4326
@@ -370,30 +370,30 @@ class Edges(pa.DataFrameModel):
         coerce = True
 
 
-class JobCalibTargets(pa.DataFrameModel):
-    """
-    Job calibration targets by tract and aggregate sector.
+# class JobCalibTargets(pa.DataFrameModel):
+#     """
+#     Job calibration targets by tract and aggregate sector.
 
-    tract_id: tract ID (repeated per aggr_sector_id)
-    aggr_sector_id: aggregated employment sector, see aggr_sector_map in variables.yaml
-    jobs_2010, jobs_2020: observed job counts; calibrate.yaml calibrates the growth between them
-    """
+#     tract_id: tract ID (repeated per aggr_sector_id)
+#     aggr_sector_id: aggregated employment sector, see aggr_sector_map in variables.yaml
+#     jobs_2010, jobs_2020: observed job counts; calibrate.yaml calibrates the growth between them
+#     """
 
-    tract_id: int = pa.Field(ge=0)
-    aggr_sector_id: int = pa.Field(isin=[1, 2, 3, 4, 5])
-    jobs_2020: float = pa.Field(ge=0)
-    jobs_2010: float = pa.Field(ge=0)
+#     tract_id: int = pa.Field(ge=0)
+#     aggr_sector_id: int = pa.Field(isin=[1, 2, 3, 4, 5])
+#     jobs_2020: float = pa.Field(ge=0)
+#     jobs_2010: float = pa.Field(ge=0)
 
-    class Config:
-        strict = "filter"
-        coerce = True
+#     class Config:
+#         strict = "filter"
+#         coerce = True
 
 
 class HouseholdCalibTargets(pa.DataFrameModel):
     """
     Household calibration targets by tract and income quartile.
 
-    tract_id: tract ID (repeated per income_quartile)
+    tract_id: tract ID from history_year version of tracts (repeated per income_quartile)
     income_quartile: household income quartile, see IncomeQuartile
     households_2010, households_2020: observed household counts; calibrate.yaml calibrates the
         growth between them
@@ -413,7 +413,7 @@ class HousingUnitCalibTargets(pa.DataFrameModel):
     """
     Housing unit calibration targets by tract and unit type.
 
-    tract_id: tract ID (repeated per unit_type_id)
+    tract_id: tract ID from history_year version of tracts (repeated per unit_type_id)
     unit_type_id: tenure/structure grouping, see UnitTypeId
     units_2010, units_2020: observed unit counts; calibrate.yaml calibrates the growth between them
     """
@@ -530,7 +530,7 @@ TABLE_MODELS: dict[str, type[pa.DataFrameModel]] = {
     "urban_centers": UrbanCenters,
     "nodes": Nodes,
     "edges": Edges,
-    "job_calib_targets": JobCalibTargets,
+    # "job_calib_targets": JobCalibTargets,
     "household_calib_targets": HouseholdCalibTargets,
     "housing_unit_calib_targets": HousingUnitCalibTargets,
     "travel_data": TravelData,

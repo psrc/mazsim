@@ -3,25 +3,34 @@
 data_sources:
 # baseline data sources, not required for scenarios
   - blocks: blocks_2020_2026-09-28.csv
-  - households: synthetic_households_2026-09-24.csv
-  - jobs: jobs_2026-09-25.csv
-  - housing_units: synthetic_housing_units_2026-09-24.csv
-  - persons: synthetic_persons_2026-09-24.csv
+  - households: synthetic_households_2020_2026-10-05.csv
+  - jobs: jobs_2020_2026-10-05.csv
+  - housing_units: synthetic_housing_units_2020_2026-10-05.csv
+  - persons: synthetic_persons_2020_2026-10-05.csv
   - transit_stops: transit_stops_2026-09-25.csv
   - urban_centers: urban_centers_2026-09-25.csv
   - nodes: nodes_2026-09-25.csv
   - edges: edges_2026-09-25.csv
 #  - job_calib_targets: job_calib_targets.csv
-  - household_calib_targets: household_calib_targets_2026-09-25.csv
-  - housing_unit_calib_targets: housing_unit_calib_targets_2026-09-25.csv
   - travel_data: travel_data.csv
   - observed_data: observed_data_sample.csv
+
+# history year data, used for calibration
+  - history_year_blocks: blocks_2010_2026-10-05.csv
+  - history_year_households: synthetic_households_2010_2026-10-05.csv
+  - history_year_jobs: jobs_2010_2026-10-05.csv
+  - history_year_housing_units: synthetic_housing_units_2010_2026-10-05.csv
+  - history_year_persons: synthetic_persons_2010_2026-10-05.csv
+  - history_year_block_capacity: hist_year_block_capacity_sample_2026-10-05.csv
+  - household_calib_targets: household_calib_targets_2026-10-05.csv
+  - housing_unit_calib_targets: housing_unit_calib_targets_2026-10-05.csv
 
 # scenario data sources
   - block_capacity: block_capacity_baseline.csv
   - annual_household_control_totals: household_control_totals_baseline.csv
   - annual_job_control_totals: job_control_totals_baseline.csv
 
-# optional: include zipped version of the data input tables
-# data_loader will unzip it automatically if tables are missing
+# optional: include zipped version of the data input tables 
+# for reducing storage space on github. data_loader step will 
+# unzip it automatically if any tables are missing.
 data_archive: example_baseline_data.zip

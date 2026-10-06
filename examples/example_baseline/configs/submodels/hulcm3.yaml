@@ -1,87 +1,75 @@
-modelmanager_version: 0.3.dev0
+modelmanager_version: '0.3'
 
 saved_object:
     alt_capacity: vacant_hu_spaces
     alt_filters: null
     alt_sample_size: 50
     alternatives: blocks
-    choice_column: block_id
+    choice_column: maz_id
     chooser_filters: (year_built > 2010) & (unit_type_id == 3)
     chooser_sample_size: null
     chooser_size: null
     choosers: housing_units
     constrained_choices: true
     fitted_parameters:
-    - -0.26716533453550095
-    - -0.16503569163740897
-    - 0.010179115235613895
-    - 0.0021301020591487983
-    - 0.20598146114491964
-    - 0.02894562139908727
-    - 0.0300625133269622
-    - -0.1934153389688764
-    - 0.21819472582195826
-    - -0.37651548298318266
-    - 0.24416783758028104
-    - -0.20951475853369608
-    - -0.52619324004948
-    - 0.37414238983278447
-    - 0.47362797147732916
-    - 1.7736047964902535
+    - 0.7979268281048733
+    - 0.8265827515183924
+    - -0.46570954756448435
+    - -0.41230003349378
+    - 0.20481299169565895
+    - 0.8956397599077961
+    - 0.233308142902865
+    - -0.6998706978385674
+    - 0.1433714974910241
+    - 0.07242134305269497
+    - -0.07499182367178117
+    - 0.11116447515612073
     max_iter: null
     mct_intx_ops: null
-    model_expression: major_road_node_sum_800_flat + st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
-        + st_prop_aggr_sector_id_1_ave_1600_flat + st_prop_aggr_sector_id_2_ave_1600_flat
-        + st_prop_aggr_sector_id_3_ave_1600_flat + st_prop_aggr_sector_id_4_ave_1600_flat
-        + st_prop_aggr_sector_id_5_ave_1600_flat + st_ln_block_groups_mean_res_value
-        + st_ln_block_groups_mean_res_rent + st_total_households_sum_2000_linear +
-        st_block_groups_median_year_built + st_is_transit_stop_sum_1600_flat + st_block_groups_median_income
-        + st_block_groups_prop_built_after_2010_1 + st_prop_children_0_ave_400_flat
-        + st_sum_income_ave_1600_flat - 1
+    model_expression: st_sum_mf_built_prev_10_years_ave_800_flat + st_mean_year_built
+        + st_block_groups_median_year_built + st_block_groups_median_income + st_sum_income_ave_800_flat
+        + st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
+        + st_sum_sf_ave_800_flat + st_ln_zones_total_jobs_30_minutes_am_single_vehicle_to_work_travel_time
+        + st_ln_res_value_ave_1600_flat + st_prop_aggr_sector_id_5_ave_800_flat +
+        st_is_urban_center_sum_1600_flat + st_ln_block_groups_density_housing_units
+        - 1
     name: hulcm3
     out_alt_filters: vacant_hu_spaces > 0
     out_alternatives: null
-    out_chooser_filters: (block_id == -1) & (year_built > 2010) & (unit_type_id ==
-        3)
+    out_chooser_filters: (maz_id == -1) & (year_built > 2010) & (unit_type_id == 3)
     out_choosers: null
     out_column: null
     summary_table: "                  CHOICEMODELS ESTIMATION RESULTS            \
         \      \n===================================================================\n\
-        Dep. Var.:                chosen   No. Observations:          2,287\nModel:\
-        \         Multinomial Logit   Df Residuals:              2,271\nMethod:  \
-        \     Maximum Likelihood   Df Model:                     16\nDate:       \
-        \          2026-09-13   Pseudo R-squ.:             0.135\nTime:          \
-        \            09:18   Pseudo R-bar-squ.:         0.133\nAIC:              \
-        \    15,514.736   Log-Likelihood:       -7,741.368\nBIC:                 \
-        \ 15,606.496   LL-Null:              -8,946.797\n============================================================================================================================\n\
+        Dep. Var.:                chosen   No. Observations:         17,777\nModel:\
+        \         Multinomial Logit   Df Residuals:             17,765\nMethod:  \
+        \     Maximum Likelihood   Df Model:                     12\nDate:       \
+        \          2026-09-29   Pseudo R-squ.:             0.329\nTime:          \
+        \            22:03   Pseudo R-bar-squ.:         0.329\nAIC:              \
+        \    93,381.035   Log-Likelihood:      -46,678.517\nBIC:                 \
+        \ 93,474.463   LL-Null:             -69,544.033\n============================================================================================================================\n\
         \                                                                        \
         \     coef   std err         z     P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------------------------------------\n\
-        major_road_node_sum_800_flat                                             \
-        \ -0.2672     0.032    -8.370     0.000             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
-        \   -0.1650     0.041    -4.002     0.000             \nst_prop_aggr_sector_id_1_ave_1600_flat\
-        \                                     0.0102     0.019     0.524     0.600\
-        \             \nst_prop_aggr_sector_id_2_ave_1600_flat                   \
-        \                  0.0021     0.020     0.105     0.917             \nst_prop_aggr_sector_id_3_ave_1600_flat\
-        \                                     0.2060     0.020    10.379     0.000\
-        \             \nst_prop_aggr_sector_id_4_ave_1600_flat                   \
-        \                  0.0289     0.027     1.068     0.285             \nst_prop_aggr_sector_id_5_ave_1600_flat\
-        \                                     0.0301     0.021     1.427     0.154\
-        \             \nst_ln_block_groups_mean_res_value                        \
-        \                 -0.1934     0.034    -5.614     0.000             \nst_ln_block_groups_mean_res_rent\
-        \                                           0.2182     0.030     7.378   \
-        \  0.000             \nst_total_households_sum_2000_linear               \
-        \                        -0.3765     0.060    -6.269     0.000           \
-        \  \nst_block_groups_median_year_built                                   \
-        \       0.2442     0.041     5.918     0.000             \nst_is_transit_stop_sum_1600_flat\
-        \                                          -0.2095     0.030    -6.990   \
-        \  0.000             \nst_block_groups_median_income                     \
-        \                        -0.5262     0.044   -11.982     0.000           \
-        \  \nst_block_groups_prop_built_after_2010_1                             \
-        \       0.3741     0.025    15.221     0.000             \nst_prop_children_0_ave_400_flat\
-        \                                            0.4736     0.036    13.017  \
-        \   0.000             \nst_sum_income_ave_1600_flat                      \
-        \                          1.7736     0.091    19.596     0.000          \
-        \   \n============================================================================================================================"
+        st_sum_mf_built_prev_10_years_ave_800_flat                               \
+        \  0.7979     0.012    68.021     0.000             \nst_mean_year_built \
+        \                                                        0.8266     0.015\
+        \    54.231     0.000             \nst_block_groups_median_year_built    \
+        \                                     -0.4657     0.014   -33.583     0.000\
+        \             \nst_block_groups_median_income                            \
+        \                 -0.4123     0.012   -35.569     0.000             \nst_sum_income_ave_800_flat\
+        \                                                 0.2048     0.060     3.413\
+        \     0.001             \nst_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time\
+        \    0.8956     0.034    26.206     0.000             \nst_sum_sf_ave_800_flat\
+        \                                                     0.2333     0.018   \
+        \ 13.022     0.000             \nst_ln_zones_total_jobs_30_minutes_am_single_vehicle_to_work_travel_time\
+        \   -0.6999     0.037   -19.063     0.000             \nst_ln_res_value_ave_1600_flat\
+        \                                              0.1434     0.013    11.124\
+        \     0.000             \nst_prop_aggr_sector_id_5_ave_800_flat          \
+        \                            0.0724     0.007    10.131     0.000        \
+        \     \nst_is_urban_center_sum_1600_flat                                 \
+        \         -0.0750     0.007   -10.675     0.000             \nst_ln_block_groups_density_housing_units\
+        \                                   0.1112     0.011    10.367     0.000 \
+        \            \n============================================================================================================================"
     tags: []
     template: LargeMultinomialLogitStep
-    template_version: 0.3.dev0
+    template_version: '0.3'

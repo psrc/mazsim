@@ -1,59 +1,59 @@
-modelmanager_version: 0.3.dev0
+modelmanager_version: '0.3'
 
 saved_object:
     alt_capacity: vacant_housing_units
     alt_filters: null
     alt_sample_size: 100
     alternatives: blocks
-    choice_column: block_id
+    choice_column: maz_id
     chooser_filters: (recent_mover == 1) & (income_quartile == 3)
     chooser_sample_size: null
     chooser_size: null
     choosers: households
     constrained_choices: true
     fitted_parameters:
-    - -0.21873120674642518
-    - -0.15905418544863492
-    - -0.0675372001924413
-    - 2.5635078271321565
-    - 0.16306069230504638
-    - -0.003379255914239212
-    - 0.344041472537411
+    - 4.200254586511276
+    - -0.3381297429793417
+    - 0.4918158385091436
+    - 0.2710265669721265
+    - 0.14663923048970087
+    - -0.240904493441204
+    - -0.22068076380206736
+    - -0.12940067013115286
+    - 0.06614948203176405
     max_iter: null
     mct_intx_ops: null
-    model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
-        + st_ln_block_groups_mean_res_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
-        + st_block_groups_prop_built_after_2010_1 + st_block_groups_prop_children_0
-        + st_ln_block_groups_density_housing_units - 1
+    model_expression: st_sum_income_ave_800_flat + st_block_groups_median_income +
+        st_mean_year_built + st_ln_block_groups_density_housing_units + st_block_groups_prop_worker_aggr_occ_5
+        + st_prop_tenure_1_ave_800_flat + st_block_groups_median_year_built + st_block_groups_prop_cars_0
+        + st_block_groups_prop_worker_aggr_sector_3 - 1
     name: hlcm2
     out_alt_filters: vacant_housing_units > 0
     out_alternatives: null
-    out_chooser_filters: (block_id == -1) & (income_quartile == 3)
+    out_chooser_filters: (maz_id == -1) & (income_quartile == 3)
     out_choosers: null
     out_column: null
     summary_table: "                  CHOICEMODELS ESTIMATION RESULTS            \
         \       \n====================================================================\n\
-        Dep. Var.:                chosen   No. Observations:         196,348\nModel:\
-        \         Multinomial Logit   Df Residuals:             196,341\nMethod: \
-        \      Maximum Likelihood   Df Model:                       7\nDate:     \
-        \            2026-09-13   Pseudo R-squ.:              0.076\nTime:       \
-        \               09:08   Pseudo R-bar-squ.:          0.076\nAIC:          \
-        \     1,671,304.724   Log-Likelihood:      -835,645.362\nBIC:            \
-        \   1,671,376.037   LL-Null:             -904,215.956\n============================================================================================================================\n\
-        \                                                                        \
-        \     coef   std err         z     P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------------------------------------\n\
-        st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time  \
-        \ -0.2187     0.004   -49.537     0.000             \nst_ln_block_groups_mean_res_rent\
-        \                                          -0.1591     0.003   -52.163   \
-        \  0.000             \nst_is_transit_stop_sum_1600_flat                  \
-        \                        -0.0675     0.003   -24.715     0.000           \
-        \  \nst_sum_income_ave_1600_flat                                         \
-        \       2.5635     0.006   402.499     0.000             \nst_block_groups_prop_built_after_2010_1\
-        \                                    0.1631     0.002    79.237     0.000\
-        \             \nst_block_groups_prop_children_0                          \
-        \                 -0.0034     0.003    -1.021     0.307             \nst_ln_block_groups_density_housing_units\
-        \                                   0.3440     0.003   109.443     0.000 \
-        \            \n============================================================================================================================"
+        Dep. Var.:                chosen   No. Observations:         125,283\nModel:\
+        \         Multinomial Logit   Df Residuals:             125,274\nMethod: \
+        \      Maximum Likelihood   Df Model:                       9\nDate:     \
+        \            2026-09-29   Pseudo R-squ.:              0.163\nTime:       \
+        \               21:12   Pseudo R-bar-squ.:          0.163\nAIC:          \
+        \       965,293.223   Log-Likelihood:      -482,637.611\nBIC:            \
+        \     965,380.867   LL-Null:             -576,949.536\n==============================================================================================\n\
+        \                                               coef   std err         z \
+        \    P>|z|   Conf. Int.\n----------------------------------------------------------------------------------------------\n\
+        st_sum_income_ave_800_flat                   4.2003     0.008   548.628  \
+        \   0.000             \nst_block_groups_median_income               -0.3381\
+        \     0.005   -69.986     0.000             \nst_mean_year_built         \
+        \                  0.4918     0.007    66.055     0.000             \nst_ln_block_groups_density_housing_units\
+        \     0.2710     0.004    67.346     0.000             \nst_block_groups_prop_worker_aggr_occ_5\
+        \       0.1466     0.005    32.423     0.000             \nst_prop_tenure_1_ave_800_flat\
+        \               -0.2409     0.004   -59.259     0.000             \nst_block_groups_median_year_built\
+        \           -0.2207     0.007   -30.507     0.000             \nst_block_groups_prop_cars_0\
+        \                 -0.1294     0.004   -32.173     0.000             \nst_block_groups_prop_worker_aggr_sector_3\
+        \    0.0661     0.003    20.071     0.000             \n=============================================================================================="
     tags: []
     template: LargeMultinomialLogitStep
-    template_version: 0.3.dev0
+    template_version: '0.3'

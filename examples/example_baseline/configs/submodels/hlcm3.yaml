@@ -1,59 +1,67 @@
-modelmanager_version: 0.3.dev0
+modelmanager_version: '0.3'
 
 saved_object:
     alt_capacity: vacant_housing_units
     alt_filters: null
     alt_sample_size: 100
     alternatives: blocks
-    choice_column: block_id
+    choice_column: maz_id
     chooser_filters: (recent_mover == 1) & (income_quartile == 2)
     chooser_sample_size: null
     chooser_size: null
     choosers: households
     constrained_choices: true
     fitted_parameters:
-    - -0.04985589920880061
-    - -0.3232399019248557
-    - -0.13010203033250714
-    - 1.9410396143678323
-    - 0.07353764694726198
-    - -0.0970829375482414
-    - 0.5103303713280691
+    - 0.17274431447012076
+    - 0.10276795672605635
+    - 0.4261186272551598
+    - 4.032850509260826
+    - -0.6822712236188241
+    - 0.3591525707009218
+    - -0.2446872125209814
+    - -0.9673770984668797
+    - -0.031723974570560635
+    - -0.0915941193029972
+    - -0.19648242597178286
+    - -0.2082800390344702
     max_iter: null
     mct_intx_ops: null
-    model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
-        + st_ln_block_groups_mean_res_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
-        + st_block_groups_prop_built_after_2010_1 + st_block_groups_prop_children_0
-        + st_ln_block_groups_density_housing_units - 1
+    model_expression: st_sum_mf_ave_800_flat + st_sum_middle_ave_800_flat + st_mean_year_built
+        + st_sum_income_ave_800_flat + st_block_groups_median_income + st_ln_block_groups_density_housing_units
+        + st_block_groups_prop_cars_0 + st_sum_income_ave_1600_flat + st_sum_sf_built_prev_10_years_ave_800_flat
+        + st_is_transit_stop_sum_3200_flat + st_prop_tenure_1_ave_800_flat + st_block_groups_median_year_built
+        - 1
     name: hlcm3
     out_alt_filters: vacant_housing_units > 0
     out_alternatives: null
-    out_chooser_filters: (block_id == -1) & (income_quartile == 2)
+    out_chooser_filters: (maz_id == -1) & (income_quartile == 2)
     out_choosers: null
     out_column: null
     summary_table: "                  CHOICEMODELS ESTIMATION RESULTS            \
         \       \n====================================================================\n\
-        Dep. Var.:                chosen   No. Observations:         214,555\nModel:\
-        \         Multinomial Logit   Df Residuals:             214,548\nMethod: \
-        \      Maximum Likelihood   Df Model:                       7\nDate:     \
-        \            2026-09-13   Pseudo R-squ.:              0.067\nTime:       \
-        \               09:09   Pseudo R-bar-squ.:          0.067\nAIC:          \
-        \     1,842,866.647   Log-Likelihood:      -921,426.324\nBIC:            \
-        \   1,842,938.582   LL-Null:             -988,062.289\n=============================================================================================================================\n\
-        \                                                                        \
-        \     coef   std err          z     P>|z|   Conf. Int.\n-----------------------------------------------------------------------------------------------------------------------------\n\
-        st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time  \
-        \ -0.0499     0.005    -10.465     0.000             \nst_ln_block_groups_mean_res_rent\
-        \                                          -0.3232     0.003   -107.288  \
-        \   0.000             \nst_is_transit_stop_sum_1600_flat                 \
-        \                         -0.1301     0.002    -54.008     0.000         \
-        \    \nst_sum_income_ave_1600_flat                                       \
-        \         1.9410     0.007    286.749     0.000             \nst_block_groups_prop_built_after_2010_1\
-        \                                    0.0735     0.002     33.709     0.000\
-        \             \nst_block_groups_prop_children_0                          \
-        \                 -0.0971     0.003    -31.374     0.000             \nst_ln_block_groups_density_housing_units\
-        \                                   0.5103     0.003    173.734     0.000\
-        \             \n============================================================================================================================="
+        Dep. Var.:                chosen   No. Observations:         134,242\nModel:\
+        \         Multinomial Logit   Df Residuals:             134,230\nMethod: \
+        \      Maximum Likelihood   Df Model:                      12\nDate:     \
+        \            2026-09-29   Pseudo R-squ.:              0.179\nTime:       \
+        \               21:17   Pseudo R-bar-squ.:          0.179\nAIC:          \
+        \     1,014,755.290   Log-Likelihood:      -507,365.645\nBIC:            \
+        \   1,014,872.979   LL-Null:             -618,207.256\n================================================================================================\n\
+        \                                                coef   std err          z\
+        \     P>|z|   Conf. Int.\n------------------------------------------------------------------------------------------------\n\
+        st_sum_mf_ave_800_flat                        0.1727     0.005     37.898\
+        \     0.000             \nst_sum_middle_ave_800_flat                    0.1028\
+        \     0.004     25.407     0.000             \nst_mean_year_built        \
+        \                    0.4261     0.007     57.758     0.000             \n\
+        st_sum_income_ave_800_flat                    4.0329     0.022    181.972\
+        \     0.000             \nst_block_groups_median_income                -0.6823\
+        \     0.004   -154.402     0.000             \nst_ln_block_groups_density_housing_units\
+        \      0.3592     0.004     84.238     0.000             \nst_block_groups_prop_cars_0\
+        \                  -0.2447     0.004    -65.362     0.000             \nst_sum_income_ave_1600_flat\
+        \                  -0.9674     0.023    -41.317     0.000             \nst_sum_sf_built_prev_10_years_ave_800_flat\
+        \   -0.0317     0.003     -9.128     0.000             \nst_is_transit_stop_sum_3200_flat\
+        \             -0.0916     0.003    -26.934     0.000             \nst_prop_tenure_1_ave_800_flat\
+        \                -0.1965     0.005    -42.590     0.000             \nst_block_groups_median_year_built\
+        \            -0.2083     0.007    -29.534     0.000             \n================================================================================================"
     tags: []
     template: LargeMultinomialLogitStep
-    template_version: 0.3.dev0
+    template_version: '0.3'

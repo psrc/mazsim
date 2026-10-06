@@ -37,6 +37,10 @@ sum_vars: [persons, cars, income, workers, children, recent_mover, acres, housin
            sf, middle, mf, sf_built_prev_10_years, middle_built_prev_10_years,
            mf_built_prev_10_years]
 
+# A prop_<var>_<category> variable is only built for categories with more than this many agents
+# (default 5000). The example data is small, so it is lowered to keep prop_cars_0 (~3900 households).
+min_category_count: 1000
+
 # Vars used to build prop_<var>_<category> and density_<agent> variables.
 discrete_variables:
   persons: [worker_aggr_sector,worker_aggr_occ]

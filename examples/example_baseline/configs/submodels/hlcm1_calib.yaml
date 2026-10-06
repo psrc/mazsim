@@ -1,37 +1,36 @@
-modelmanager_version: 0.3.dev0
+modelmanager_version: '0.3'
 
 saved_object:
     alt_capacity: vacant_housing_units
     alt_filters: null
     alt_sample_size: 100
     alternatives: blocks
-    choice_column: block_id
+    choice_column: maz_id
     chooser_filters: (recent_mover == 1) & (income_quartile == 4)
     chooser_sample_size: null
     chooser_size: null
     choosers: households
     constrained_choices: true
     fitted_parameters:
-    - 0.1406874496288064
-    - -0.19193819809853144
-    - -0.17080765149917848
-    - 2.778366166827328
-    - -0.24474706143757435
-    - -0.3858409150832382
-    - 0.10301681953141098
+    - 4.560801749562259
+    - 0.1728265546422434
+    - 0.3521042276006259
+    - 0.25499989182239535
+    - 0.227168719574305
+    - -0.9302198332216668
+    - -0.18957903081014899
     max_iter: null
     mct_intx_ops: null
-    model_expression: st_ln_zones_total_jobs_15_minutes_am_single_vehicle_to_work_travel_time
-        + st_ln_block_groups_mean_res_rent + st_is_transit_stop_sum_1600_flat + st_sum_income_ave_1600_flat
-        + st_block_groups_prop_built_after_2010_1 + st_block_groups_prop_children_0
-        + st_ln_block_groups_density_housing_units - 1
+    model_expression: st_sum_income_ave_800_flat + st_block_groups_prop_worker_aggr_occ_2
+        + st_mean_year_built + st_ln_block_groups_density_housing_units + st_ln_res_value_ave_800_flat
+        + st_sum_income_ave_3200_flat + st_block_groups_median_year_built - 1
     name: hlcm1_calib
     out_alt_filters: vacant_housing_units > 0
     out_alternatives: null
-    out_chooser_filters: (block_id == -1) & (income_quartile == 4)
+    out_chooser_filters: (maz_id == -1) & (income_quartile == 4)
     out_choosers: null
     out_column: null
     summary_table: null
     tags: []
     template: LargeMultinomialLogitStep
-    template_version: 0.3.dev0
+    template_version: '0.3'
