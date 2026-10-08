@@ -1,9 +1,12 @@
 # Data sources configuration for the example scenario
 
 # specify the baseline run that this scenario will build upon
-baseline_run: example_baseline/output/archive/results_9.zip
+baseline: C:/Users/jkolberg/PythonProjects/PSRC/mazsim/examples/example_baseline
 
 
 # scenario data sources
 data_sources:
-  - block_capacity: block_capacity_transit_scenario.csv
+  - block_capacity: block_capacity_transit_scen_2026-10-08.csv
+
+
+scenario_data_archive: example_scenario_data.zip

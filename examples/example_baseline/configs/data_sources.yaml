@@ -13,7 +13,7 @@ data_sources:
   - edges: edges_2026-09-25.csv
 #  - job_calib_targets: job_calib_targets.csv
   - travel_data: travel_data.csv
-  - observed_data: observed_data_sample.csv
+  - observed_data: observed_data_sample_2026-10-08.csv
 
 # history year data, used for calibration
   - history_year_blocks: blocks_2010_2026-10-06.csv
@@ -25,7 +25,7 @@ data_sources:
   - housing_unit_calib_targets: housing_unit_calib_targets_2026-10-06.csv
 
 # scenario data sources
-  - block_capacity: block_capacity_baseline.csv
+  - block_capacity: block_capacity_baseline_2026-10-08.csv
   - annual_household_control_totals: household_control_totals_baseline.csv
   - annual_job_control_totals: job_control_totals_baseline.csv
 
