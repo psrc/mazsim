@@ -33,6 +33,24 @@ def vacant_job_spaces(blocks, jobs):
         jobs.maz_id.value_counts(), fill_value=0).clip(lower=0)
 
 
+TRANSIT_AREA_TRACTS = [
+    153053060200,
+    153053061100,
+    153053061200,
+    153053061300,
+    153053061400,
+    153053061501,
+    153053061502,
+    153053061601,
+    153053061602,
+    153053061700,
+    153053940002
+]
+
+@orca.column("blocks", "transit_area", cache=True, cache_scope="forever")
+def transit_area(blocks):
+    return blocks["tract_id"].isin(TRANSIT_AREA_TRACTS).astype("int32")
+
 #----------------------------------------------------------------------------------------
 # Custom household variables
 #----------------------------------------------------------------------------------------

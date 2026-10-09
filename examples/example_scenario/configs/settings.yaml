@@ -1,0 +1,8 @@
+# Scenario settings; every other key is inherited from the baseline project's settings.yaml.
+
+# baseline project folder, absolute or relative to this project's parent folder
+baseline: example_baseline
+
+# archived baseline run to compare to, which must be a full simulation through end_year;
+# defaults to the latest run in the baseline's output/archive
+# baseline_run_number: 24

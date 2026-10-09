@@ -22,7 +22,7 @@ from mazsim.data_loader import OBSERVED_PREFIX
 @orca.step('initialize_submodels')
 def initialize_submodels(project_dir):
     """Point modelmanager at the project's submodels directory, where every saved step yaml lives."""
-    submodels_dir = Path(project_dir) / 'configs' / 'submodels'
+    submodels_dir = config.configs_dir(project_dir) / 'submodels'
     submodels_dir.mkdir(parents=True, exist_ok=True)
     mm.initialize(submodels_dir)
 

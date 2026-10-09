@@ -21,6 +21,9 @@ def get_project_dir() -> Path:
 
 
 def configs_dir(project_dir: Path | None = None) -> Path:
+    # a scenario run registers its merged configs here
+    if orca.is_injectable("configs_dir"):
+        return Path(orca.get_injectable("configs_dir"))
     return Path(project_dir or get_project_dir()) / "configs"
 
 

@@ -19,6 +19,7 @@ geographic_levels:
   - [counties, county_id]
   - [blocks, maz_id]
   - [zones, zone_id]
+  - [transit_areas, transit_area]
 
 aggregation_functions: [mean, median, std, sum]
 

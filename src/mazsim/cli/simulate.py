@@ -10,14 +10,15 @@ import argparse
 from mazsim import control_totals, data_loader, submodels, variable_loader, config
 from mazsim.outputs import get_last_run_number, start_run_log
 from mazsim.submodels import initialize_submodels
+from mazsim.util import scenario_helpers
 
 
 def _load_simulate_yaml(project_dir: Path) -> dict[str, Any]:
-    config_path = project_dir / "configs" / "simulate.yaml"
+    config_path = config.configs_dir(project_dir) / "simulate.yaml"
     return yaml.safe_load(config_path.read_text())
 
 def _load_observed_yaml(project_dir: Path) -> dict[str, Any]:
-    config_path = project_dir / "configs" / "observed_data.yaml"
+    config_path = config.configs_dir(project_dir) / "observed_data.yaml"
     return yaml.safe_load(config_path.read_text())
 
 def _load_simulation_years(project_dir: Path):
@@ -40,15 +41,19 @@ def add_run_args(parser):
     )
 
 
-def run(args):
-    """Run the orca steps listed in simulate.yaml."""
+def run_simulation(project_dir: Path, extra_postprocessing: list[str] | None = None) -> None:
+    """Run the steps in simulate.yaml; extra steps go right before archive_results, or last without it."""
     start_time = time.time()
 
     # set up project directory and orca injectables
-    project_dir = Path(args.configs_dir).parent
     orca.add_injectable("project_dir", project_dir)
     simulate_yaml = _load_simulate_yaml(project_dir)
     observed_yaml = _load_observed_yaml(project_dir)
+
+    postprocessing_steps = list(simulate_yaml['postprocessing_steps'])
+    if extra_postprocessing:
+        position = postprocessing_steps.index('archive_results') if 'archive_results' in postprocessing_steps else len(postprocessing_steps)
+        postprocessing_steps[position:position] = extra_postprocessing
 
     # run preprocessing steps
     orca.run(simulate_yaml["preprocessing_steps"])
@@ -70,10 +75,20 @@ def run(args):
     orca.run(simulate_yaml["simulation_steps"], iter_vars)
 
     # run post-processing steps
-    orca.run(simulate_yaml['postprocessing_steps'])
+    orca.run(postprocessing_steps)
 
     end_time = time.time()
     print(f"Simulation completed in {(end_time - start_time)/60:.2f} minutes")
+
+
+def run(args):
+    """Run the orca steps listed in simulate.yaml."""
+    configs_dir = Path(args.configs_dir)
+    if scenario_helpers.read_scenario_settings(configs_dir).get("baseline"):
+        sys.exit(f"{configs_dir} is a scenario (its settings.yaml has a 'baseline'); "
+                 f"run it with: mazsim scenario -c {configs_dir}")
+
+    run_simulation(configs_dir.parent)
     sys.exit()
 
 

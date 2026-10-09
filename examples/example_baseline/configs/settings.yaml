@@ -14,8 +14,8 @@ geography_id: maz_id
 base_year: 2020
 end_year: 2050
 
-calibrated_hh: true
-calibrated_hu: true
+calibrated_hh: false
+calibrated_hu: false
 calibrated_jobs: false
 
 # control total type (regional or subregional)

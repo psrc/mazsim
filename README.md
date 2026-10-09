@@ -36,3 +36,15 @@
     ```uv run mazsim simulate -c examples\example_baseline\configs```
 
     Simulation first forces observed jobs and housing_units to be placed and then begins the simulation using the most recent observed data year possible. In the example, the most recent observed jobs data is 2023 and most recent observed housing_unit data is 2025. The simulation starts in 2023 but continues to force the placement of housing_units in 2024 and 2025 while job placement switches to being simulated in 2024. Households are still placed by the LCMs so they will not perfectly match observed household data if provided.
+
+8. Run a scenario with the following command:
+
+    ```uv run mazsim scenario -c examples\example_scenario\configs```
+
+    A scenario builds on a baseline project. The scenario's `settings.yaml` names it with `baseline` (a path, relative to the scenario project's parent folder or absolute) and optionally `baseline_run_number`, the archived baseline run to compare to (default: the latest). The baseline's configs and data are used as-is except where the scenario's `configs` folder overrides them:
+
+    - Yaml files in both are merged key by key (nested dicts merge, lists are replaced). In `data_sources.yaml` the table lists merge by table name, so a scenario table is read from the scenario's `data` folder in place of the baseline's table of the same name; all other tables are read from the baseline's `data` folder.
+    - `.py` files and `submodels\*.yaml` files replace the baseline's whole.
+    - `scenario_data_archive` in `data_sources.yaml` is a zip of the scenario's tables, extracted automatically if any are missing.
+
+    Results go to the scenario's `output` folder, with end-year differences from the baseline run in `output_summaries\<geography>_<end_year>_scen_minus_base.csv`. The archived run holds the merged configs in `configs` and the scenario's own files in `scenario_configs`. `simulate` refuses to run a scenario's configs.

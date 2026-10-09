@@ -161,30 +161,41 @@ def _register_observed_data(project_dir):
         orca.add_column(cfg["target_table"], col_name, observed)
 
 
+def _missing_table_files(project_dir) -> list[Path]:
+    """Files this run will load from data_sources.yaml that are missing from disk."""
+    cfg = config.load_yaml("data_sources.yaml", project_dir)
+    data_dir_path = Path.joinpath(project_dir, orca.get_injectable('data_dir'))
+    paths = (data_dir_path / file_name for _, file_name, _ in _active_sources(cfg))
+    return [path for path in paths if not path.exists()]
+
+
 def check_for_missing_tables(project_dir):
     """Return True if any table this run will load from data_sources.yaml is missing from disk."""
-    cfg = config.load_yaml("data_sources.yaml", project_dir)
-    data_dir_path = Path.joinpath(project_dir, orca.get_injectable('data_dir'))
-    return any(not (data_dir_path / file_name).exists() for _, file_name, _ in _active_sources(cfg))
+    return bool(_missing_table_files(project_dir))
+
 
 def unzip_data_archive(project_dir):
-    """Extract the data archive if any tables are missing; leftover gaps are caught by schema validation later."""
-    if not check_for_missing_tables(project_dir):
+    """Extract each data archive that covers a missing table; leftover gaps are caught by schema validation later.
+
+    An archive is extracted into its own folder, so a scenario's baseline archive (an absolute path in
+    the merged data_sources.yaml) restores the baseline's data dir and `scenario_data_archive` the scenario's.
+    """
+    missing_dirs = {path.parent for path in _missing_table_files(project_dir)}
+    if not missing_dirs:
         return
 
     cfg = config.load_yaml("data_sources.yaml", project_dir)
-    data_archive_file = cfg.get("data_archive")
-    if not data_archive_file:
-        return
-
     data_dir_path = Path.joinpath(project_dir, orca.get_injectable('data_dir'))
-    archive_path = Path.joinpath(data_dir_path, data_archive_file)
-    if not archive_path.exists():
-        return
+    for key in ("data_archive", "scenario_data_archive"):
+        if not cfg.get(key):
+            continue
+        archive_path = data_dir_path / cfg[key]
+        if not archive_path.exists() or archive_path.parent not in missing_dirs:
+            continue
 
-    print(f"Extracting data archive: {archive_path}")
-    with zipfile.ZipFile(archive_path, 'r') as zip_ref:
-        zip_ref.extractall(data_dir_path)
+        print(f"Extracting data archive: {archive_path}")
+        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            zip_ref.extractall(archive_path.parent)
 
 
 @orca.step("load_data")

@@ -2,15 +2,16 @@ import orca
 import sys
 from pathlib import Path
 import pandas as pd
-import yaml
 import zipfile
+
+from mazsim import config
 
 
 @orca.step('save_output_summaries')
 def save_output_summaries():
     output_dir = Path.joinpath(orca.get_injectable('project_dir'),orca.get_injectable('output_dir'),'output_summaries')
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    cfg = yaml.safe_load(open(Path.joinpath(orca.get_injectable('project_dir'),'configs','output_summary.yaml')))
+    cfg = config.load_yaml('output_summary.yaml')
     year = orca.get_injectable('year')
     variables = cfg['variables']
     for geography in cfg['geography']:
@@ -22,7 +23,7 @@ def save_diff_summaries():
     """Use the exported output summary CSV files to calculate differences between start and end years."""
     output_dir = Path.joinpath(orca.get_injectable('project_dir'),orca.get_injectable('output_dir'),'output_summaries')
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    cfg = yaml.safe_load(open(Path.joinpath(orca.get_injectable('project_dir'),'configs','output_summary.yaml')))
+    cfg = config.load_yaml('output_summary.yaml')
     start_year = orca.get_injectable('start_year')
     end_year = orca.get_injectable('end_year')
     diff_variables = cfg['diff_variables']
@@ -68,10 +69,13 @@ def start_run_log(project_dir):
 
 
 def get_last_run_number(project_dir):
-    """Highest N found in output/results_N.h5, or 0 when no runs exist yet."""
-    output_dir = Path(project_dir) / orca.get_injectable('output_dir') / "archive"
+    """Highest N found in output/archive/results_N.zip, or 0 when no runs exist yet."""
+    return _max_run_number(Path(project_dir) / orca.get_injectable('output_dir') / "archive")
+
+
+def _max_run_number(archive_dir):
     run_numbers = []
-    for path in output_dir.glob("results_*.zip"):
+    for path in Path(archive_dir).glob("results_*.zip"):
         suffix = path.stem.split("_")[-1]
         if suffix.isdigit():
             run_numbers.append(int(suffix))
@@ -94,6 +98,38 @@ def save_full_tables():
             store[f'{year}/{table_name}'] = df
 
 
+@orca.step('save_baseline_comparison')
+def save_baseline_comparison():
+    """Write end-year scenario minus baseline differences of the output summary diff_variables."""
+    output_dir = Path(orca.get_injectable('project_dir')) / orca.get_injectable('output_dir') / 'output_summaries'
+    cfg = config.load_yaml('output_summary.yaml')
+    end_year = orca.get_injectable('end_year')
+    diff_variables = cfg['diff_variables']
+
+    archive_dir = Path(orca.get_injectable('baseline_archive_dir'))
+    if orca.is_injectable('baseline_run_number'):
+        baseline_run = orca.get_injectable('baseline_run_number')
+    else:
+        baseline_run = _max_run_number(archive_dir)
+    baseline_archive = archive_dir / f"results_{baseline_run}.zip"
+    if not baseline_archive.is_file():
+        raise FileNotFoundError(f"Baseline run archive not found: {baseline_archive}")
+
+    print(f"Comparing {end_year} output summaries to {baseline_archive}")
+    with zipfile.ZipFile(baseline_archive) as zipf:
+        for geography in cfg['geography']:
+            member = f'output_summaries/{geography}_{end_year}.csv'
+            if member not in zipf.namelist():
+                raise FileNotFoundError(
+                    f"{member} not found in {baseline_archive}; set baseline_run_number in the scenario's "
+                    f"settings.yaml to a baseline run that simulated through {end_year}.")
+            with zipf.open(member) as f:
+                df_base = pd.read_csv(f, index_col=0)
+            df_scen = pd.read_csv(output_dir / f'{geography}_{end_year}.csv', index_col=0)
+            df_diff = df_scen[diff_variables].sub(df_base[diff_variables], fill_value=0)
+            df_diff.reset_index().to_csv(output_dir / f'{geography}_{end_year}_scen_minus_baseline.csv', index=False)
+
+
 @orca.step('archive_results')
 def archive_results():
     project_dir = orca.get_injectable('project_dir')
@@ -106,7 +142,11 @@ def archive_results():
     results_h5 = output_dir / f"results_{run_number}.h5"
     run_log = output_dir / f"run_{run_number}.log"
     summary_files = sorted((output_dir / 'output_summaries').glob('*.csv'))
-    config_files = sorted(p for p in (project_dir / 'configs').rglob('*') if p.is_file())
+    config_dir = config.configs_dir(project_dir)
+    config_files = sorted(p for p in config_dir.rglob('*') if p.is_file())
+    # only set on scenario runs, where config_dir is the merged baseline + scenario configs
+    scenario_config_dir = Path(orca.get_injectable('scenario_configs_dir')) if orca.is_injectable('scenario_configs_dir') else None
+    scenario_config_files = sorted(p for p in scenario_config_dir.rglob('*') if p.is_file()) if scenario_config_dir else []
     # empty on simulate runs, which don't produce validation summaries
     validation_files = sorted(p for p in (output_dir / 'validation_summaries').glob('*') if p.suffix in ('.csv', '.html'))
     sys.stdout.flush()
@@ -119,7 +159,9 @@ def archive_results():
         for validation_file in validation_files:
             zipf.write(validation_file, Path('validation_summaries') / validation_file.name)
         for config_file in config_files:
-            zipf.write(config_file, Path('configs') / config_file.relative_to(project_dir / 'configs'))
+            zipf.write(config_file, Path('configs') / config_file.relative_to(config_dir))
+        for config_file in scenario_config_files:
+            zipf.write(config_file, Path('scenario_configs') / config_file.relative_to(scenario_config_dir))
     print(f"Archived results to {archive_file}")
 
 @orca.step('delete_non_archived_run_files')

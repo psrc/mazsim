@@ -3,6 +3,8 @@
 
 geography: 
   - counties
+  - tracts
+  - transit_areas
 
 variables:
   - sum_persons
